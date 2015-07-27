@@ -2220,6 +2220,7 @@ function loadSession()
 	ini_set('url_rewriter.tags', '');
 	ini_set('session.use_trans_sid', false);
 	ini_set('arg_separator.output', '&amp;');
+	ini_set('session.cookie_httponly', 1);
 
 	if (!empty($settings['globalCookies']))
 	{
