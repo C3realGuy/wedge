@@ -26,8 +26,7 @@ if (!defined('WEDGE'))
 
 function getMessageIcons($board_id)
 {
-	$icon_data = cache_get_data('posting_icons-' . $board_id, 480, function () use ($board_id)
-	{
+	$icon_data = cache_get_data('posting_icons-' . $board_id, 480, function () use ($board_id) {
 		return wesql::get_all('
 			SELECT title, filename
 			FROM {db_prefix}message_icons

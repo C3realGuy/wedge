@@ -1632,7 +1632,8 @@ function prepareSearchContext($reset = false)
 		// Fix the international characters in the keyword too.
 		$query = strtr(westr::htmlspecialchars($query), array('\\\'' => '\''));
 
-		$body_highlighted = preg_replace_callback('~((<[^>]*)|' . preg_quote(strtr($query, array('\'' => '&#039;')), '~') . ')~iu', function ($match) { return !empty($match[2]) && $match[2] == $match[1] ? stripslashes($match[1]) : '<mark>' . $match[1] . '</mark>'; }, $body_highlighted);
+		$body_highlighted = preg_replace_callback('~((<[^>]*)|' . preg_quote(strtr($query, array('\'' => '&#039;')), '~') . ')~iu', function ($match) {
+	return !empty($match[2]) && $match[2] == $match[1] ? stripslashes($match[1]) : '<mark>' . $match[1] . '</mark>'; }, $body_highlighted);
 		$subject_highlighted = preg_replace('~(' . preg_quote($query, '~') . ')~iu', '<mark>$1</mark>', $subject_highlighted);
 	}
 
@@ -1682,5 +1683,6 @@ function wedge_ranged_implode($separator, $arr)
 
 function wedge_ranged_explode($separator, $string)
 {
-	return empty($string) ? array() : explode($separator, preg_replace_callback('~(\d+)-(\d+)~', function ($m) { return implode(',', range($m[1], $m[2])); }, $string));
+	return empty($string) ? array() : explode($separator, preg_replace_callback('~(\d+)-(\d+)~', function ($m) {
+	return implode(',', range($m[1], $m[2])); }, $string));
 }

@@ -1,0 +1,9 @@
+{
+    "scripts": {
+        "cs": "phpcs --standard=./ruleset.xml",
+        "cbf": "phpcbf --standard=./ruleset.xml"
+    },
+    "require-dev": {
+        "squizlabs/php_codesniffer": "*"
+    }
+}

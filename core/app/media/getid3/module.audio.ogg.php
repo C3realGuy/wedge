@@ -18,7 +18,8 @@ getid3_lib::IncludeDependency(GETID3_INCLUDEPATH.'module.audio.flac.php', __FILE
 class getid3_ogg extends getid3_handler
 {
 	// http://xiph.org/vorbis/doc/Vorbis_I_spec.html
-	public function Analyze() {
+	public function Analyze() 
+	{
 		$info = &$this->getid3->info;
 
 		$info['fileformat'] = 'ogg';
@@ -300,7 +301,8 @@ class getid3_ogg extends getid3_handler
 		return true;
 	}
 
-	public function ParseVorbisPageHeader(&$filedata, &$filedataoffset, &$oggpageinfo) {
+	public function ParseVorbisPageHeader(&$filedata, &$filedataoffset, &$oggpageinfo) 
+	{
 		$info = &$this->getid3->info;
 		$info['audio']['dataformat'] = 'vorbis';
 		$info['audio']['lossless']   = false;
@@ -348,7 +350,8 @@ class getid3_ogg extends getid3_handler
 		return true;
 	}
 
-	public function ParseOggPageHeader() {
+	public function ParseOggPageHeader() 
+	{
 		// http://xiph.org/ogg/vorbis/doc/framing.html
 		$oggheader['page_start_offset'] = $this->ftell(); // where we started from in the file
 
@@ -399,8 +402,9 @@ class getid3_ogg extends getid3_handler
 		return $oggheader;
 	}
 
-    // http://xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-810005
-	public function ParseVorbisComments() {
+	// http://xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-810005
+	public function ParseVorbisComments() 
+	{
 		$info = &$this->getid3->info;
 
 		$OriginalOffset = $this->ftell();
@@ -620,7 +624,8 @@ class getid3_ogg extends getid3_handler
 		return true;
 	}
 
-	public static function SpeexBandModeLookup($mode) {
+	public static function SpeexBandModeLookup($mode) 
+	{
 		static $SpeexBandModeLookup = array();
 		if (empty($SpeexBandModeLookup)) {
 			$SpeexBandModeLookup[0] = 'narrow';
@@ -631,7 +636,8 @@ class getid3_ogg extends getid3_handler
 	}
 
 
-	public static function OggPageSegmentLength($OggInfoArray, $SegmentNumber=1) {
+	public static function OggPageSegmentLength($OggInfoArray, $SegmentNumber=1) 
+	{
 		for ($i = 0; $i < $SegmentNumber; $i++) {
 			$segmentlength = 0;
 			foreach ($OggInfoArray['segment_table'] as $key => $value) {
@@ -645,7 +651,8 @@ class getid3_ogg extends getid3_handler
 	}
 
 
-	public static function get_quality_from_nominal_bitrate($nominal_bitrate) {
+	public static function get_quality_from_nominal_bitrate($nominal_bitrate) 
+	{
 
 		// decrease precision
 		$nominal_bitrate = $nominal_bitrate / 1000;

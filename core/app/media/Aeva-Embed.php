@@ -366,7 +366,8 @@ function aeva_build_object($input)
 
 	// Strip the #options out of the original link
 	$input[1] = preg_replace('~#.*~', '', $input[1]);
-	$input = preg_replace_callback('~#[^"<]*~', function ($match) { return strtr($match[0], '~', '-'); }, $input);
+	$input = preg_replace_callback('~#[^"<]*~', function ($match) {
+	return strtr($match[0], '~', '-'); }, $input);
 	if ($tentative_title && substr($tentative_title, 0, 7) !== 'http://')
 		$title = $tentative_title;
 
@@ -649,7 +650,8 @@ function aeva_limits()
 function aeva_autolink_urls($input)
 {
 	// Parse any URLs.... And ensure they're not already auto-linked!
-	$input = preg_replace_callback('~(=|\[(?:url|img(?:\s[^]]*)?)])(https?://|ftps?://|www\.)~i', function ($match) { return $match[0] . '!<AEVA_LOOKBEHIND>!'; }, $input);
+	$input = preg_replace_callback('~(=|\[(?:url|img(?:\s[^]]*)?)])(https?://|ftps?://|www\.)~i', function ($match) {
+	return $match[0] . '!<AEVA_LOOKBEHIND>!'; }, $input);
 
 	if (preg_match('~(?:https?://|www\.)[^!]~i', $input))
 	{

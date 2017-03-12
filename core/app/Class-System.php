@@ -21,7 +21,8 @@ class we
 	static $cache;					// Cache of parsed strings
 
 	// What kind of class are you, anyway? One of a kind!
-	private function __clone() {}
+	private function __clone() 
+{}
 
 	public static function &getInstance($load_user = true)
 	{

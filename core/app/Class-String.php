@@ -78,8 +78,7 @@ class westr_foundation
 	{
 		return preg_replace_callback(
 			'~&#(\d{2,8}|x[0-9a-fA-F]{1,6});~',
-			function ($n) use ($reencode_sensitive)
-			{
+			function ($n) use ($reencode_sensitive) {
 				if (is_array($n))
 					$n = $n[1];
 				if ($n[0] === 'x')
@@ -106,8 +105,7 @@ class westr_foundation
 	{
 		return preg_replace_callback(
 			'~([\x80-\x{10FFFF}])~u',
-			function ($c)
-			{
+			function ($c) {
 				if (is_array($c))
 					$c = $c[1];
 
@@ -130,7 +128,8 @@ class westr_foundation
 	// Converts &#224; to \u00e0, for use in JavaScript notation. Gzip likes these, you know..?
 	static function entity_to_js_code($string)
 	{
-		return preg_replace_callback('~&#(\d+);~', function ($str) { return '\u' . str_pad(dechex($str[1]), 4, '0', STR_PAD_LEFT); }, $string);
+		return preg_replace_callback('~&#(\d+);~', function ($str) {
+	return '\u' . str_pad(dechex($str[1]), 4, '0', STR_PAD_LEFT); }, $string);
 	}
 }
 
@@ -328,7 +327,8 @@ class westr extends westr_mb
 		$work = preg_replace('~(?:&[^&;]+;|<[^>]+>)~', chr(20), $string);
 
 		if (!$test_mb)
-			$strlen = self::$can_mb ? 'mb_strlen' : function ($str) { return strlen(preg_replace('~.~us', '_', $str)); };
+			$strlen = self::$can_mb ? 'mb_strlen' : function ($str) {
+	return strlen(preg_replace('~.~us', '_', $str)); };
 
 		$test_mb = true;
 

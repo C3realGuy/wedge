@@ -162,7 +162,8 @@ class wess
 		return array($rgb[0], $color, $hsl);
 	}
 
-	function process(&$css) {}
+	function process(&$css) 
+{}
 }
 
 class wess_mixin extends wess
@@ -842,7 +843,8 @@ class wess_nesting extends wess
 
 		$tree = preg_replace('~^(@(?:import|charset)\h+[^{}\n]*);?$~mi', '<rule selector="$1"></rule>', $tree); // Transform single-line @rules into selectors
 		$tree = preg_replace('~^([!+>&#*@:.a-z0-9][^{};]*?\h*reset);~mi', '<rule selector="$1"></rule>', $tree); // Transform single-line resets into selectors
-		$tree = preg_replace_callback('~\burl\([^)]+\)~', function ($a) { return str_replace(':', '#wedge-colon#', $a[0]); }, $tree); // Protect colons (:) inside URLs
+		$tree = preg_replace_callback('~\burl\([^)]+\)~', function ($a) {
+	return str_replace(':', '#wedge-colon#', $a[0]); }, $tree); // Protect colons (:) inside URLs
 		$tree = preg_replace('~([a-z, -]+)\h*:(?!//)\h*([^;}{\n]+?);*\h*(?=[\n}])~i', '<property name="$1" value="$2">', $tree); // Transform properties
 		$tree = preg_replace('~<property name="[^"]+" value="\h+">~', '', $tree); // Remove properties with empty content (e.g. background: $bg where $bg is later unset)
 		$tree = preg_replace('~(?<=^|[\s};])([!+>&#*@:.a-z0-9](?:[^{\n]|(?=,)\n)*?)\s*{~i', '<rule selector="$1">', $tree); // Transform selectors. Strings starting with a digit are only allowed because of keyframes.
@@ -1583,10 +1585,12 @@ class wess_prefixes extends wess
 
 			// This is a little trick to convert degrees between prefixed and unprefixed gradients. I even shared: http://tinyurl.com/pcnfk27
 			if (strpos($prefixed, 'deg') !== false)
-				$prefixed = preg_replace_callback('~(gradient\h*\(\s*)(-?(?:\d+|\d*\.\d+))(?=deg\b)~', function ($a) { return $a[1] . (90 - $a[2]); }, $prefixed);
+				$prefixed = preg_replace_callback('~(gradient\h*\(\s*)(-?(?:\d+|\d*\.\d+))(?=deg\b)~', function ($a) {
+	return $a[1] . (90 - $a[2]); }, $prefixed);
 
 			if (strpos($prefixed, 'radial-gradient') !== false && $b['webkit']) // Pretty much Safari-specific...
-				$prefixed = preg_replace_callback('~(?<=radial-gradient\()([\sa-z-]+\s+)?at\s([^,]+)(?=,)~', function ($a) { return $a[2] . ($a[1] != '' ? ', ' . $a[1] : ''); }, $prefixed);
+				$prefixed = preg_replace_callback('~(?<=radial-gradient\()([\sa-z-]+\s+)?at\s([^,]+)(?=,)~', function ($a) {
+	return $a[2] . ($a[1] != '' ? ', ' . $a[1] : ''); }, $prefixed);
 
 			return $prefixed;
 		}

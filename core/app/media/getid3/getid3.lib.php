@@ -14,7 +14,8 @@
 class getid3_lib
 {
 
-	public static function PrintHexBytes($string, $hex=true, $spaces=true, $htmlencoding='UTF-8') {
+	public static function PrintHexBytes($string, $hex=true, $spaces=true, $htmlencoding='UTF-8') 
+	{
 		$returnstring = '';
 		for ($i = 0; $i < strlen($string); $i++) {
 			if ($hex) {
@@ -35,7 +36,8 @@ class getid3_lib
 		return $returnstring;
 	}
 
-	public static function trunc($floatnumber) {
+	public static function trunc($floatnumber) 
+	{
 		// truncates a floating-point number at the decimal point
 		// returns int (if possible, otherwise float)
 		if ($floatnumber >= 1) {
@@ -52,7 +54,8 @@ class getid3_lib
 	}
 
 
-	public static function safe_inc(&$variable, $increment=1) {
+	public static function safe_inc(&$variable, $increment=1) 
+	{
 		if (isset($variable)) {
 			$variable += $increment;
 		} else {
@@ -61,7 +64,8 @@ class getid3_lib
 		return true;
 	}
 
-	public static function CastAsInt($floatnum) {
+	public static function CastAsInt($floatnum) 
+	{
 		// convert to float if not already
 		$floatnum = (float) $floatnum;
 
@@ -76,7 +80,8 @@ class getid3_lib
 		return $floatnum;
 	}
 
-	public static function intValueSupported($num) {
+	public static function intValueSupported($num) 
+	{
 		// check if integers are 64-bit
 		static $hasINT64 = null;
 		if ($hasINT64 === null) { // 10x faster than is_null()
@@ -92,20 +97,23 @@ class getid3_lib
 		return false;
 	}
 
-	public static function DecimalizeFraction($fraction) {
+	public static function DecimalizeFraction($fraction) 
+	{
 		list($numerator, $denominator) = explode('/', $fraction);
 		return $numerator / ($denominator ? $denominator : 1);
 	}
 
 
-	public static function DecimalBinary2Float($binarynumerator) {
+	public static function DecimalBinary2Float($binarynumerator) 
+	{
 		$numerator   = self::Bin2Dec($binarynumerator);
 		$denominator = self::Bin2Dec('1'.str_repeat('0', strlen($binarynumerator)));
 		return ($numerator / $denominator);
 	}
 
 
-	public static function NormalizeBinaryPoint($binarypointnumber, $maxbits=52) {
+	public static function NormalizeBinaryPoint($binarypointnumber, $maxbits=52) 
+	{
 		// http://www.scri.fsu.edu/~jac/MAD3401/Backgrnd/binary.html
 		if (strpos($binarypointnumber, '.') === false) {
 			$binarypointnumber = '0.'.$binarypointnumber;
@@ -129,7 +137,8 @@ class getid3_lib
 	}
 
 
-	public static function Float2BinaryDecimal($floatvalue) {
+	public static function Float2BinaryDecimal($floatvalue) 
+	{
 		// http://www.scri.fsu.edu/~jac/MAD3401/Backgrnd/binary.html
 		$maxbits = 128; // to how many bits of precision should the calculations be taken?
 		$intpart   = self::trunc($floatvalue);
@@ -145,7 +154,8 @@ class getid3_lib
 	}
 
 
-	public static function Float2String($floatvalue, $bits) {
+	public static function Float2String($floatvalue, $bits) 
+	{
 		// http://www.scri.fsu.edu/~jac/MAD3401/Backgrnd/ieee-expl.html
 		switch ($bits) {
 			case 32:
@@ -176,12 +186,14 @@ class getid3_lib
 	}
 
 
-	public static function LittleEndian2Float($byteword) {
+	public static function LittleEndian2Float($byteword) 
+	{
 		return self::BigEndian2Float(strrev($byteword));
 	}
 
 
-	public static function BigEndian2Float($byteword) {
+	public static function BigEndian2Float($byteword) 
+	{
 		// ANSI/IEEE Standard 754-1985, Standard for Binary Floating Point Arithmetic
 		// http://www.psc.edu/general/software/packages/ieee/ieee.html
 		// http://www.scri.fsu.edu/~jac/MAD3401/Backgrnd/ieee.html
@@ -259,7 +271,8 @@ class getid3_lib
 	}
 
 
-	public static function BigEndian2Int($byteword, $synchsafe=false, $signed=false) {
+	public static function BigEndian2Int($byteword, $synchsafe=false, $signed=false) 
+	{
 		$intvalue = 0;
 		$bytewordlen = strlen($byteword);
 		if ($bytewordlen == 0) {
@@ -289,12 +302,14 @@ class getid3_lib
 	}
 
 
-	public static function LittleEndian2Int($byteword, $signed=false) {
+	public static function LittleEndian2Int($byteword, $signed=false) 
+	{
 		return self::BigEndian2Int(strrev($byteword), false, $signed);
 	}
 
 
-	public static function BigEndian2Bin($byteword) {
+	public static function BigEndian2Bin($byteword) 
+	{
 		$binvalue = '';
 		$bytewordlen = strlen($byteword);
 		for ($i = 0; $i < $bytewordlen; $i++) {
@@ -304,7 +319,8 @@ class getid3_lib
 	}
 
 
-	public static function BigEndian2String($number, $minbytes=1, $synchsafe=false, $signed=false) {
+	public static function BigEndian2String($number, $minbytes=1, $synchsafe=false, $signed=false) 
+	{
 		if ($number < 0) {
 			throw new Exception('ERROR: self::BigEndian2String() does not support negative numbers');
 		}
@@ -325,7 +341,8 @@ class getid3_lib
 	}
 
 
-	public static function Dec2Bin($number) {
+	public static function Dec2Bin($number) 
+	{
 		while ($number >= 256) {
 			$bytes[] = (($number / 256) - (floor($number / 256))) * 256;
 			$number = floor($number / 256);
@@ -339,7 +356,8 @@ class getid3_lib
 	}
 
 
-	public static function Bin2Dec($binstring, $signed=false) {
+	public static function Bin2Dec($binstring, $signed=false) 
+	{
 		$signmult = 1;
 		if ($signed) {
 			if ($binstring{0} == '1') {
@@ -355,7 +373,8 @@ class getid3_lib
 	}
 
 
-	public static function Bin2String($binstring) {
+	public static function Bin2String($binstring) 
+	{
 		// return 'hi' for input of '0110100001101001'
 		$string = '';
 		$binstringreversed = strrev($binstring);
@@ -366,7 +385,8 @@ class getid3_lib
 	}
 
 
-	public static function LittleEndian2String($number, $minbytes=1, $synchsafe=false) {
+	public static function LittleEndian2String($number, $minbytes=1, $synchsafe=false) 
+	{
 		$intstring = '';
 		while ($number > 0) {
 			if ($synchsafe) {
@@ -381,7 +401,8 @@ class getid3_lib
 	}
 
 
-	public static function array_merge_clobber($array1, $array2) {
+	public static function array_merge_clobber($array1, $array2) 
+	{
 		// written by kcØhireability*com
 		// taken from http://www.php.net/manual/en/function.array-merge-recursive.php
 		if (!is_array($array1) || !is_array($array2)) {
@@ -399,7 +420,8 @@ class getid3_lib
 	}
 
 
-	public static function array_merge_noclobber($array1, $array2) {
+	public static function array_merge_noclobber($array1, $array2) 
+	{
 		if (!is_array($array1) || !is_array($array2)) {
 			return false;
 		}
@@ -415,7 +437,8 @@ class getid3_lib
 	}
 
 
-	public static function ksort_recursive(&$theArray) {
+	public static function ksort_recursive(&$theArray) 
+	{
 		ksort($theArray);
 		foreach ($theArray as $key => $value) {
 			if (is_array($value)) {
@@ -425,7 +448,8 @@ class getid3_lib
 		return true;
 	}
 
-	public static function fileextension($filename, $numextensions=1) {
+	public static function fileextension($filename, $numextensions=1) 
+	{
 		if (strstr($filename, '.')) {
 			$reversedfilename = strrev($filename);
 			$offset = 0;
@@ -441,7 +465,8 @@ class getid3_lib
 	}
 
 
-	public static function PlaytimeString($seconds) {
+	public static function PlaytimeString($seconds) 
+	{
 		$sign = (($seconds < 0) ? '-' : '');
 		$seconds = round(abs($seconds));
 		$H = (int) floor( $seconds                            / 3600);
@@ -451,30 +476,35 @@ class getid3_lib
 	}
 
 
-	public static function DateMac2Unix($macdate) {
+	public static function DateMac2Unix($macdate) 
+	{
 		// Macintosh timestamp: seconds since 00:00h January 1, 1904
 		// UNIX timestamp:      seconds since 00:00h January 1, 1970
 		return self::CastAsInt($macdate - 2082844800);
 	}
 
 
-	public static function FixedPoint8_8($rawdata) {
+	public static function FixedPoint8_8($rawdata) 
+	{
 		return self::BigEndian2Int(substr($rawdata, 0, 1)) + (float) (self::BigEndian2Int(substr($rawdata, 1, 1)) / pow(2, 8));
 	}
 
 
-	public static function FixedPoint16_16($rawdata) {
+	public static function FixedPoint16_16($rawdata) 
+	{
 		return self::BigEndian2Int(substr($rawdata, 0, 2)) + (float) (self::BigEndian2Int(substr($rawdata, 2, 2)) / pow(2, 16));
 	}
 
 
-	public static function FixedPoint2_30($rawdata) {
+	public static function FixedPoint2_30($rawdata) 
+	{
 		$binarystring = self::BigEndian2Bin($rawdata);
 		return self::Bin2Dec(substr($binarystring, 0, 2)) + (float) (self::Bin2Dec(substr($binarystring, 2, 30)) / pow(2, 30));
 	}
 
 
-	public static function CreateDeepArray($ArrayPath, $Separator, $Value) {
+	public static function CreateDeepArray($ArrayPath, $Separator, $Value) 
+	{
 		// assigns $Value to a nested array path:
 		//   $foo = self::CreateDeepArray('/path/to/my', '/', 'file.txt')
 		// is the same as:
@@ -490,7 +520,8 @@ class getid3_lib
 		return $ReturnedArray;
 	}
 
-	public static function array_max($arraydata, $returnkey=false) {
+	public static function array_max($arraydata, $returnkey=false) 
+	{
 		$maxvalue = false;
 		$maxkey = false;
 		foreach ($arraydata as $key => $value) {
@@ -504,7 +535,8 @@ class getid3_lib
 		return ($returnkey ? $maxkey : $maxvalue);
 	}
 
-	public static function array_min($arraydata, $returnkey=false) {
+	public static function array_min($arraydata, $returnkey=false) 
+	{
 		$minvalue = false;
 		$minkey = false;
 		foreach ($arraydata as $key => $value) {
@@ -518,7 +550,8 @@ class getid3_lib
 		return ($returnkey ? $minkey : $minvalue);
 	}
 
-	public static function XML2array($XMLstring) {
+	public static function XML2array($XMLstring) 
+	{
 		if (function_exists('simplexml_load_string')) {
 			if (function_exists('get_object_vars')) {
 				$XMLobject = simplexml_load_string($XMLstring);
@@ -528,7 +561,8 @@ class getid3_lib
 		return false;
 	}
 
-	public static function SimpleXMLelement2array($XMLobject) {
+	public static function SimpleXMLelement2array($XMLobject) 
+	{
 		if (!is_object($XMLobject) && !is_array($XMLobject)) {
 			return $XMLobject;
 		}
@@ -542,7 +576,8 @@ class getid3_lib
 
 	// Allan Hansen <ahØartemis*dk>
 	// self::md5_data() - returns md5sum for a file from startuing position to absolute end position
-	public static function hash_data($file, $offset, $end, $algorithm) {
+	public static function hash_data($file, $offset, $end, $algorithm) 
+	{
 		static $tempdir = '';
 		if (!self::intValueSupported($end)) {
 			return false;
@@ -628,7 +663,8 @@ class getid3_lib
 		return $result;
 	}
 
-	public static function CopyFileParts($filename_source, $filename_dest, $offset, $length) {
+	public static function CopyFileParts($filename_source, $filename_dest, $offset, $length) 
+	{
 		if (!self::intValueSupported($offset + $length)) {
 			throw new Exception('cannot copy file portion, it extends beyond the '.round(PHP_INT_MAX / 1073741824).'GB limit');
 		}
@@ -655,7 +691,8 @@ class getid3_lib
 		return false;
 	}
 
-	public static function iconv_fallback_int_utf8($charval) {
+	public static function iconv_fallback_int_utf8($charval) 
+	{
 		if ($charval < 128) {
 			// 0bbbbbbb
 			$newcharstring = chr($charval);
@@ -679,7 +716,8 @@ class getid3_lib
 	}
 
 	// ISO-8859-1 => UTF-8
-	public static function iconv_fallback_iso88591_utf8($string, $bom=false) {
+	public static function iconv_fallback_iso88591_utf8($string, $bom=false) 
+	{
 		if (function_exists('utf8_encode')) {
 			return utf8_encode($string);
 		}
@@ -696,7 +734,8 @@ class getid3_lib
 	}
 
 	// ISO-8859-1 => UTF-16BE
-	public static function iconv_fallback_iso88591_utf16be($string, $bom=false) {
+	public static function iconv_fallback_iso88591_utf16be($string, $bom=false) 
+	{
 		$newcharstring = '';
 		if ($bom) {
 			$newcharstring .= "\xFE\xFF";
@@ -708,7 +747,8 @@ class getid3_lib
 	}
 
 	// ISO-8859-1 => UTF-16LE
-	public static function iconv_fallback_iso88591_utf16le($string, $bom=false) {
+	public static function iconv_fallback_iso88591_utf16le($string, $bom=false) 
+	{
 		$newcharstring = '';
 		if ($bom) {
 			$newcharstring .= "\xFF\xFE";
@@ -720,12 +760,14 @@ class getid3_lib
 	}
 
 	// ISO-8859-1 => UTF-16LE (BOM)
-	public static function iconv_fallback_iso88591_utf16($string) {
+	public static function iconv_fallback_iso88591_utf16($string) 
+	{
 		return self::iconv_fallback_iso88591_utf16le($string, true);
 	}
 
 	// UTF-8 => ISO-8859-1
-	public static function iconv_fallback_utf8_iso88591($string) {
+	public static function iconv_fallback_utf8_iso88591($string) 
+	{
 		if (function_exists('utf8_decode')) {
 			return utf8_decode($string);
 		}
@@ -769,7 +811,8 @@ class getid3_lib
 	}
 
 	// UTF-8 => UTF-16BE
-	public static function iconv_fallback_utf8_utf16be($string, $bom=false) {
+	public static function iconv_fallback_utf8_utf16be($string, $bom=false) 
+	{
 		$newcharstring = '';
 		if ($bom) {
 			$newcharstring .= "\xFE\xFF";
@@ -812,7 +855,8 @@ class getid3_lib
 	}
 
 	// UTF-8 => UTF-16LE
-	public static function iconv_fallback_utf8_utf16le($string, $bom=false) {
+	public static function iconv_fallback_utf8_utf16le($string, $bom=false) 
+	{
 		$newcharstring = '';
 		if ($bom) {
 			$newcharstring .= "\xFF\xFE";
@@ -855,12 +899,14 @@ class getid3_lib
 	}
 
 	// UTF-8 => UTF-16LE (BOM)
-	public static function iconv_fallback_utf8_utf16($string) {
+	public static function iconv_fallback_utf8_utf16($string) 
+	{
 		return self::iconv_fallback_utf8_utf16le($string, true);
 	}
 
 	// UTF-16BE => UTF-8
-	public static function iconv_fallback_utf16be_utf8($string) {
+	public static function iconv_fallback_utf16be_utf8($string) 
+	{
 		if (substr($string, 0, 2) == "\xFE\xFF") {
 			// strip BOM
 			$string = substr($string, 2);
@@ -874,7 +920,8 @@ class getid3_lib
 	}
 
 	// UTF-16LE => UTF-8
-	public static function iconv_fallback_utf16le_utf8($string) {
+	public static function iconv_fallback_utf16le_utf8($string) 
+	{
 		if (substr($string, 0, 2) == "\xFF\xFE") {
 			// strip BOM
 			$string = substr($string, 2);
@@ -888,7 +935,8 @@ class getid3_lib
 	}
 
 	// UTF-16BE => ISO-8859-1
-	public static function iconv_fallback_utf16be_iso88591($string) {
+	public static function iconv_fallback_utf16be_iso88591($string) 
+	{
 		if (substr($string, 0, 2) == "\xFE\xFF") {
 			// strip BOM
 			$string = substr($string, 2);
@@ -902,7 +950,8 @@ class getid3_lib
 	}
 
 	// UTF-16LE => ISO-8859-1
-	public static function iconv_fallback_utf16le_iso88591($string) {
+	public static function iconv_fallback_utf16le_iso88591($string) 
+	{
 		if (substr($string, 0, 2) == "\xFF\xFE") {
 			// strip BOM
 			$string = substr($string, 2);
@@ -916,7 +965,8 @@ class getid3_lib
 	}
 
 	// UTF-16 (BOM) => ISO-8859-1
-	public static function iconv_fallback_utf16_iso88591($string) {
+	public static function iconv_fallback_utf16_iso88591($string) 
+	{
 		$bom = substr($string, 0, 2);
 		if ($bom == "\xFE\xFF") {
 			return self::iconv_fallback_utf16be_iso88591(substr($string, 2));
@@ -927,7 +977,8 @@ class getid3_lib
 	}
 
 	// UTF-16 (BOM) => UTF-8
-	public static function iconv_fallback_utf16_utf8($string) {
+	public static function iconv_fallback_utf16_utf8($string) 
+	{
 		$bom = substr($string, 0, 2);
 		if ($bom == "\xFE\xFF") {
 			return self::iconv_fallback_utf16be_utf8(substr($string, 2));
@@ -937,7 +988,8 @@ class getid3_lib
 		return $string;
 	}
 
-	public static function iconv_fallback($in_charset, $out_charset, $string) {
+	public static function iconv_fallback($in_charset, $out_charset, $string) 
+	{
 
 		if ($in_charset == $out_charset) {
 			return $string;
@@ -986,7 +1038,8 @@ class getid3_lib
 	}
 
 
-	public static function MultiByteCharString2HTML($string, $charset='ISO-8859-1') {
+	public static function MultiByteCharString2HTML($string, $charset='ISO-8859-1') 
+	{
 		$string = (string) $string; // in case trying to pass a numeric (float, int) string, would otherwise return an empty string
 		$HTMLstring = '';
 
@@ -1080,7 +1133,8 @@ class getid3_lib
 
 
 
-	public static function RGADnameLookup($namecode) {
+	public static function RGADnameLookup($namecode) 
+	{
 		static $RGADname = array();
 		if (empty($RGADname)) {
 			$RGADname[0] = 'not set';
@@ -1092,7 +1146,8 @@ class getid3_lib
 	}
 
 
-	public static function RGADoriginatorLookup($originatorcode) {
+	public static function RGADoriginatorLookup($originatorcode) 
+	{
 		static $RGADoriginator = array();
 		if (empty($RGADoriginator)) {
 			$RGADoriginator[0] = 'unspecified';
@@ -1105,7 +1160,8 @@ class getid3_lib
 	}
 
 
-	public static function RGADadjustmentLookup($rawadjustment, $signbit) {
+	public static function RGADadjustmentLookup($rawadjustment, $signbit) 
+	{
 		$adjustment = $rawadjustment / 10;
 		if ($signbit == 1) {
 			$adjustment *= -1;
@@ -1114,7 +1170,8 @@ class getid3_lib
 	}
 
 
-	public static function RGADgainString($namecode, $originatorcode, $replaygain) {
+	public static function RGADgainString($namecode, $originatorcode, $replaygain) 
+	{
 		if ($replaygain < 0) {
 			$signbit = '1';
 		} else {
@@ -1129,12 +1186,14 @@ class getid3_lib
 		return $gainstring;
 	}
 
-	public static function RGADamplitude2dB($amplitude) {
+	public static function RGADamplitude2dB($amplitude) 
+	{
 		return 20 * log10($amplitude);
 	}
 
 
-	public static function GetDataImageSize($imgData, &$imageinfo=array()) {
+	public static function GetDataImageSize($imgData, &$imageinfo=array()) 
+	{
 		static $tempdir = '';
 		if (empty($tempdir)) {
 			// yes this is ugly, feel free to suggest a better way
@@ -1155,12 +1214,14 @@ class getid3_lib
 		return $GetDataImageSize;
 	}
 
-	public static function ImageExtFromMime($mime_type) {
+	public static function ImageExtFromMime($mime_type) 
+	{
 		// temporary way, works OK for now, but should be reworked in the future
 		return str_replace(array('image/', 'x-', 'jpeg'), array('', '', 'jpg'), $mime_type);
 	}
 
-	public static function ImageTypesLookup($imagetypeid) {
+	public static function ImageTypesLookup($imagetypeid) 
+	{
 		static $ImageTypesLookup = array();
 		if (empty($ImageTypesLookup)) {
 			$ImageTypesLookup[1]  = 'gif';
@@ -1181,7 +1242,8 @@ class getid3_lib
 		return (isset($ImageTypesLookup[$imagetypeid]) ? $ImageTypesLookup[$imagetypeid] : '');
 	}
 
-	public static function CopyTagsToComments(&$ThisFileInfo) {
+	public static function CopyTagsToComments(&$ThisFileInfo) 
+	{
 
 		// Copy all entries from ['tags'] into common ['comments']
 		if (!empty($ThisFileInfo['tags'])) {
@@ -1245,7 +1307,8 @@ class getid3_lib
 	}
 
 
-	public static function EmbeddedLookup($key, $begin, $end, $file, $name) {
+	public static function EmbeddedLookup($key, $begin, $end, $file, $name) 
+	{
 
 		// Cached
 		static $cache;
@@ -1291,7 +1354,8 @@ class getid3_lib
 		return (isset($cache[$file][$name][$key]) ? $cache[$file][$name][$key] : '');
 	}
 
-	public static function IncludeDependency($filename, $sourcefile, $DieOnFailure=false) {
+	public static function IncludeDependency($filename, $sourcefile, $DieOnFailure=false) 
+	{
 		global $GETID3_ERRORARRAY;
 
 		if (file_exists($filename)) {
@@ -1311,11 +1375,13 @@ class getid3_lib
 		return false;
 	}
 
-	public static function trimNullByte($string) {
+	public static function trimNullByte($string) 
+	{
 		return trim($string, "\x00");
 	}
 
-	public static function getFileSizeSyscall($path) {
+	public static function getFileSizeSyscall($path) 
+	{
 		$filesize = false;
 
 		if (GETID3_OS_ISWINDOWS) {

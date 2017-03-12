@@ -776,19 +776,45 @@ final class weSkeletonItem
 	}
 
 	// The following are chainable aliases to the equivalent functions.
-	function load($items)		{ $this->skeleton->load($this->target, $items); return $this; }
-	function replace($items)	{ $this->skeleton->replace($this->target, $items); return $this; }
-	function add($items)		{ $this->skeleton->add($this->target, $items); return $this; }
-	function first($items)		{ $this->skeleton->first($this->target, $items); return $this; }
-	function before($items)		{ $this->skeleton->before($this->target, $items); return $this; }
-	function after($items)		{ $this->skeleton->after($this->target, $items); return $this; }
-	function insert($items)		{ $this->skeleton->insert($this->target, $items); return $this; }
-	function move($layer, $p)	{ $this->skeleton->move($this->target, $layer, $p); return $this; }
-	function rename($layer)		{ $this->skeleton->rename($this->target, $layer); return $this; }
-	function outer($layer)		{ $this->skeleton->outer($this->target, $layer); return $this; }
-	function inner($layer)		{ $this->skeleton->inner($this->target, $layer); return $this; }
-	function skip()				{ $this->skeleton->skip($this->target); return $this; }
-	function parent()			{ return $this->skeleton->get($this->skeleton->parent($this->target)); }
+	function load($items)		
+	{
+	$this->skeleton->load($this->target, $items); return $this; }
+	function replace($items)	
+	{
+	$this->skeleton->replace($this->target, $items); return $this; }
+	function add($items)		
+	{
+	$this->skeleton->add($this->target, $items); return $this; }
+	function first($items)		
+	{
+	$this->skeleton->first($this->target, $items); return $this; }
+	function before($items)		
+	{
+	$this->skeleton->before($this->target, $items); return $this; }
+	function after($items)		
+	{
+	$this->skeleton->after($this->target, $items); return $this; }
+	function insert($items)		
+	{
+	$this->skeleton->insert($this->target, $items); return $this; }
+	function move($layer, $p)	
+	{
+	$this->skeleton->move($this->target, $layer, $p); return $this; }
+	function rename($layer)		
+	{
+	$this->skeleton->rename($this->target, $layer); return $this; }
+	function outer($layer)		
+	{
+	$this->skeleton->outer($this->target, $layer); return $this; }
+	function inner($layer)		
+	{
+	$this->skeleton->inner($this->target, $layer); return $this; }
+	function skip()				
+	{
+	$this->skeleton->skip($this->target); return $this; }
+	function parent()			
+	{
+	return $this->skeleton->get($this->skeleton->parent($this->target)); }
 }
 
 /*************
@@ -834,25 +860,67 @@ final class wetem
 		return self::$hooks->add($target, $contents);
 	}
 
-	static function has($item)									{ return self::$main->has($item); }
-	static function has_block($block)							{ return self::$main->has_block($block); }
-	static function has_layer($layer)							{ return self::$main->has_layer($layer); }
-	static function render()									{		 self::$main->render(); }
-	static function get($targets = '')							{ return self::$main->get($targets); }
-	static function before($target, $contents = '')				{ return self::$main->before($target, $contents); }
-	static function after($target, $contents = '')				{ return self::$main->after($target, $contents); }
-	static function insert($target, $contents = '')				{ return self::$main->insert($target, $contents); }
-	static function skip($target)								{ return self::$main->skip($target); }
-	static function remove($target)								{		 self::$main->remove($target); }
-	static function move($item, $target, $where)				{ return self::$main->move($item, $target, $where); }
-	static function parent($child)								{ return self::$main->parent($child); }
-	static function load($target, $contents = '')				{ return self::$main->load($target, $contents); }
-	static function add($target, $contents = '')				{ return self::$main->add($target, $contents); }
-	static function first($target, $contents = '')				{ return self::$main->first($target, $contents); }
-	static function replace($target, $contents = '')			{ return self::$main->replace($target, $contents); }
-	static function rename($target, $new_name)					{ return self::$main->rename($target, $new_name); }
-	static function outer($target, $new_layer = '')				{ return self::$main->outer($target, $new_layer); }
-	static function inner($target, $new_layer = '')				{ return self::$main->inner($target, $new_layer); }
-	static function hide($layer = '')							{ return self::$main->hide($layer); }
-	static function layer($layer, $target = '', $where = '')	{ return self::$main->layer($layer, $target, $where ? $where : 'replace'); }
+	static function has($item)									
+	{
+	return self::$main->has($item); }
+	static function has_block($block)							
+	{
+	return self::$main->has_block($block); }
+	static function has_layer($layer)							
+	{
+	return self::$main->has_layer($layer); }
+	static function render()									
+	{
+		 self::$main->render(); }
+	static function get($targets = '')							
+	{
+	return self::$main->get($targets); }
+	static function before($target, $contents = '')				
+	{
+	return self::$main->before($target, $contents); }
+	static function after($target, $contents = '')				
+	{
+	return self::$main->after($target, $contents); }
+	static function insert($target, $contents = '')				
+	{
+	return self::$main->insert($target, $contents); }
+	static function skip($target)								
+	{
+	return self::$main->skip($target); }
+	static function remove($target)								
+	{
+		 self::$main->remove($target); }
+	static function move($item, $target, $where)				
+	{
+	return self::$main->move($item, $target, $where); }
+	static function parent($child)								
+	{
+	return self::$main->parent($child); }
+	static function load($target, $contents = '')				
+	{
+	return self::$main->load($target, $contents); }
+	static function add($target, $contents = '')				
+	{
+	return self::$main->add($target, $contents); }
+	static function first($target, $contents = '')				
+	{
+	return self::$main->first($target, $contents); }
+	static function replace($target, $contents = '')			
+	{
+	return self::$main->replace($target, $contents); }
+	static function rename($target, $new_name)					
+	{
+	return self::$main->rename($target, $new_name); }
+	static function outer($target, $new_layer = '')				
+	{
+	return self::$main->outer($target, $new_layer); }
+	static function inner($target, $new_layer = '')				
+	{
+	return self::$main->inner($target, $new_layer); }
+	static function hide($layer = '')							
+	{
+	return self::$main->hide($layer); }
+	static function layer($layer, $target = '', $where = '')	
+	{
+	return self::$main->layer($layer, $target, $where ? $where : 'replace'); }
 }

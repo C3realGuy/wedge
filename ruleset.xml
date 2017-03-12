@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<ruleset name="Wedge">
+ <description>Coding standard for the Wedge forum software</description>
+
+ <file>./core/</file>
+ <file>./install/</file>
+ <file>./index.php</file>
+ <file>./subscriptions.php</file>
+
+ <arg name="extensions" value="php"/>
+
+ <!-- RULES -->
+
+ <!--
+  Functions.MultilineFunctionDeclaration.BraceOnSameLine
+
+  Opening brace has to be on the next line.
+ -->
+ <rule ref="Squiz.Functions.MultiLineFunctionDeclaration.BraceOnSameLine"/>
+
+ <!--
+   WhiteSpace.DisallowSpaceIndent
+
+   Tabs must be used to indent lines, spaces are not allowed.
+ -->
+ <rule ref="Generic.WhiteSpace.DisallowSpaceIndent"/>
+
+</ruleset>

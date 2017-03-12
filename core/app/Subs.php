@@ -1486,8 +1486,7 @@ function getRePrefix()
 	if (isset($context['response_prefix']))
 		return;
 
-	$context['response_prefix'] = cache_get_data('re_prefix', 'forever', function ()
-	{
+	$context['response_prefix'] = cache_get_data('re_prefix', 'forever', function () {
 		global $settings, $txt;
 
 		if ($settings['language'] === we::$user['language'])
@@ -1928,8 +1927,8 @@ function match_cidr($ip, $cidr_block)
 
 			// OK, so we need to figure out what's going on with these last digits.
 			$cidr_ip = hexdec(substr($cidr_ip, $whole_digits, 1));
-            $ip = hexdec(substr($ip, $whole_digits, 1));
-            $mask = 16 - pow(2, $mask % 4);
+			$ip = hexdec(substr($ip, $whole_digits, 1));
+			$mask = 16 - pow(2, $mask % 4);
 
 			return ($cidr_ip & $mask) == ($ip & $mask);
 		}

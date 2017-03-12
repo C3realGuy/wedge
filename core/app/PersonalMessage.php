@@ -297,8 +297,7 @@ function PersonalMessage()
 		loadLanguage('Post');
 
 	// Load the label data.
-	$context['labels'] = cache_get_data('labelCounts:' . MID, 720, function ()
-	{
+	$context['labels'] = cache_get_data('labelCounts:' . MID, 720, function () {
 		global $txt;
 
 		$labels = empty(we::$user['data']['pmlabs']) ? array() : explode(',', we::$user['data']['pmlabs']);

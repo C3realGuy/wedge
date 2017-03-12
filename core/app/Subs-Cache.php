@@ -1130,7 +1130,8 @@ function wedge_cache_js($id, &$lang_name, $latest_date, $ext, $js, $gzip = false
 	// to output blocks of code only for members, guests or admins.
 	$final = preg_replace_callback(
 		'~@if\s*\(?(guest|member|admin)\s*\)?\s*({((?:(?>[^{}]+)|(?-2))*)})(?:\s*@else\s*({((?:(?>[^{}]+)|(?-2))*)}))?~i',
-		function ($match) { return !empty(we::$is[$match[1]]) ? $match[3] : (isset($match[5]) ? $match[5] : ''); },
+		function ($match) {
+	return !empty(we::$is[$match[1]]) ? $match[3] : (isset($match[5]) ? $match[5] : ''); },
 		$final
 	);
 

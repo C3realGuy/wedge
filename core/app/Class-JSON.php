@@ -73,7 +73,7 @@ if (!function_exists('json_decode'))
  */
 class weJSON
 {
-   /**
+	/**
 	* constructs a new JSON instance
 	*
 	* @param	int $use	object behavior flags; combine with boolean-OR

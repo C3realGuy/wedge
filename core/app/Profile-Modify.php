@@ -282,7 +282,8 @@ function loadProfileFields($force_reload = false)
 		'gender' => array(
 			'type' => 'select',
 			'cast_type' => 'int',
-			'options' => function () { global $txt; return array(0 => '', 1 => $txt['male'], 2 => $txt['female']); },
+			'options' => function () {
+	global $txt; return array(0 => '', 1 => $txt['male'], 2 => $txt['female']); },
 			'label' => $txt['gender'],
 			'permission' => 'profile_extra',
 			'class' => 'fixed',
@@ -292,7 +293,8 @@ function loadProfileFields($force_reload = false)
 			'value' => empty($cur_profile['hide_email']) ? true : false,
 			'label' => $txt['allow_user_email'],
 			'permission' => 'profile_identity',
-			'input_validate' => function (&$value) { $value = $value == 0 ? 1 : 0; return true; },
+			'input_validate' => function (&$value) {
+	$value = $value == 0 ? 1 : 0; return true; },
 		),
 		// Selecting group membership is a complicated one so we treat it separate!
 		'id_group' => array(
@@ -305,7 +307,8 @@ function loadProfileFields($force_reload = false)
 		),
 		'lngfile' => array(
 			'type' => 'select',
-			'options' => function () { global $context; return $context['profile_languages']; },
+			'options' => function () {
+	global $context; return $context['profile_languages']; },
 			'label' => $txt['preferred_language'],
 			'permission' => 'profile_identity',
 			'privacy' => 'language',
@@ -608,7 +611,8 @@ function loadProfileFields($force_reload = false)
 		),
 		'timezone' => array(
 			'type' => 'select',
-			'options' => function () { return get_wedge_timezones(); },
+			'options' => function () {
+	return get_wedge_timezones(); },
 			'permission' => 'profile_extra',
 			'privacy' => 'time',
 			'label' => $txt['time_zone'],

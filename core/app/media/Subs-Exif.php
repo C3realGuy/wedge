@@ -158,7 +158,8 @@ if (!defined('WEDGE'))
 // Converts from Intel to Motorola endien.  Just reverses the bytes (assumes hex is passed in)
 //================================================================================================
 
-function intel2Moto($intel) {
+function intel2Moto($intel) 
+{
 	static $cache = array();
 	if (isset($cache[$intel])) {
 		return $cache[$intel];
@@ -179,7 +180,8 @@ function intel2Moto($intel) {
 //================================================================================================
 // Looks up the name of the tag
 //================================================================================================
-function lookup_tag($tag) {
+function lookup_tag($tag) 
+{
 	switch($tag) {
 		// used by IFD0 'Camera Tags'
 		case '000b': $tag = 'ACDComment'; break;               // text string up to 999 bytes long
@@ -333,7 +335,8 @@ function lookup_tag($tag) {
 //================================================================================================
 // Looks up the datatype
 //================================================================================================
-function lookup_type(&$type,&$size) {
+function lookup_type(&$type,&$size) 
+{
 	switch($type) {
 		case '0001': $type = 'UBYTE'; $size=1; break;
 		case '0002': $type = 'ASCII'; $size=1; break;
@@ -355,14 +358,16 @@ function lookup_type(&$type,&$size) {
 //================================================================================================
 // truncates unreasonable read data requests.
 //================================================================================================
-function validSize($bytesofdata) {
+function validSize($bytesofdata) 
+{
 	return min(8191,max(0,$bytesofdata));
 }
 
 //================================================================================================
 // processes a irrational number
 //================================================================================================
-function unRational($data, $type, $intel) {
+function unRational($data, $type, $intel) 
+{
 		$data = bin2hex($data);
 		if ($intel == 1) {
 			$data = intel2Moto($data);
@@ -386,7 +391,8 @@ function unRational($data, $type, $intel) {
 //================================================================================================
 // processes a rational number
 //================================================================================================
-function rational($data,$type,$intel) {
+function rational($data,$type,$intel) 
+{
 	if (($type == 'USHORT' || $type == 'SSHORT')) {
 		$data = substr($data,0,2);
 	}
@@ -403,7 +409,8 @@ function rational($data,$type,$intel) {
 //================================================================================================
 // Formats Data for the data type
 //================================================================================================
-function formatData($type,$tag,$intel,$data) {
+function formatData($type,$tag,$intel,$data) 
+{
 	switch ($type) {
 		case 'ASCII':
 			if (($pos = strpos($data, chr(0))) !== false) {	// Search for a null byte and stop there.
@@ -675,7 +682,8 @@ function formatData($type,$tag,$intel,$data) {
 	return $data;
 }
 
-function formatExposure($data) {
+function formatExposure($data) 
+{
 	if (strpos($data,'/')===false) {
 		if ($data >= 1) {
 			return round($data, 2).' '.gettext('sec');
@@ -692,7 +700,8 @@ function formatExposure($data) {
 //================================================================================================
 // Reads one standard IFD entry
 //================================================================================================
-function read_entry(&$result,$in,$seek,$intel,$ifd_name,$globalOffset) {
+function read_entry(&$result,$in,$seek,$intel,$ifd_name,$globalOffset) 
+{
 
 	if (feof($in)) { // test to make sure we can still read.
 		$result['Errors'] = $result['Errors']+1;
@@ -798,7 +807,8 @@ function read_entry(&$result,$in,$seek,$intel,$ifd_name,$globalOffset) {
 // http:// pel.sourceforge.net/
 // http:// us2.php.net/manual/en/function.exif-read-data.php
 //================================================================================================
-function read_exif_data_raw($path,$verbose) {
+function read_exif_data_raw($path,$verbose) 
+{
 
 	if ($path == '' || $path == 'none') return;
 
@@ -1096,7 +1106,8 @@ if ($result['ValidJpeg'] == 1) {
 //=========================================================
 // Converts a floating point number into a simple fraction.
 //=========================================================
-function ConvertToFraction($v, &$n, &$d) {
+function ConvertToFraction($v, &$n, &$d) 
+{
 	if ($v == 0) {
 		$n = 0;
 		$d = 1;
@@ -1112,7 +1123,8 @@ function ConvertToFraction($v, &$n, &$d) {
 //================================================================================================
 // Calculates the 35mm-equivalent focal length from the reported sensor resolution, by Tristan Harward.
 //================================================================================================
-function get35mmEquivFocalLength(&$result) {
+function get35mmEquivFocalLength(&$result) 
+{
 	if (isset($result['SubIFD']['ExifImageWidth'])) {
 		$width = $result['SubIFD']['ExifImageWidth'];
 	} else {
@@ -1156,7 +1168,8 @@ function get35mmEquivFocalLength(&$result) {
 //=================
 // Looks up the name of the tag for the MakerNote (Depends on Manufacturer)
 //====================================================================
-function lookup_Canon_tag($tag) {
+function lookup_Canon_tag($tag) 
+{
 
 	switch($tag) {
 		case "0001": $tag = "Settings 1";break;
@@ -1178,7 +1191,8 @@ function lookup_Canon_tag($tag) {
 //=================
 // Formats Data for the data type
 //====================================================================
-function formatCanonData($type,$tag,$intel,$data,$exif,&$result) {
+function formatCanonData($type,$tag,$intel,$data,$exif,&$result) 
+{
 	$place = 0;
 
 
@@ -1475,7 +1489,8 @@ function formatCanonData($type,$tag,$intel,$data,$exif,&$result) {
 // http://www.burren.cx/david/canon.html
 // http://www.ozhiker.com/electronics/pjmt/jpeg_info/canon_mn.html
 //====================================================================
-function parseCanon($block,&$result,$seek, $globalOffset) {
+function parseCanon($block,&$result,$seek, $globalOffset) 
+{
 	$place = 0; //current place
 
 	if($result['Endien']=="Intel") $intel=1;
@@ -1554,7 +1569,8 @@ function parseCanon($block,&$result,$seek, $globalOffset) {
 //=================
 // Looks up the name of the tag for the MakerNote (Depends on Manufacturer)
 //====================================================================
-function lookup_Fujifilm_tag($tag) {
+function lookup_Fujifilm_tag($tag) 
+{
 
 	switch($tag) {
 		case "0000": $tag = "Version";break;
@@ -1584,7 +1600,8 @@ function lookup_Fujifilm_tag($tag) {
 //=================
 // Formats Data for the data type
 //====================================================================
-function formatFujifilmData($type,$tag,$intel,$data) {
+function formatFujifilmData($type,$tag,$intel,$data) 
+{
 
 	if($type=="ASCII") {
 
@@ -1701,7 +1718,8 @@ function formatFujifilmData($type,$tag,$intel,$data) {
 //=================
 // Fujifilm Special data section
 //====================================================================
-function parseFujifilm($block,&$result) {
+function parseFujifilm($block,&$result) 
+{
 
 	//if($result['Endien']=="Intel") $intel=1;
 	//else $intel=0;
@@ -1773,7 +1791,8 @@ function parseFujifilm($block,&$result) {
 //=================
 // Looks up the name of the tag
 //====================================================================
-function lookup_GPS_tag($tag) {
+function lookup_GPS_tag($tag) 
+{
 
 	switch($tag) {
 		case "0000": $tag = "Version";break;
@@ -1818,7 +1837,8 @@ function lookup_GPS_tag($tag) {
 //=================
 // Formats Data for the data type
 //====================================================================
-function formatGPSData($type,$tag,$intel,$data) {
+function formatGPSData($type,$tag,$intel,$data) 
+{
 
 	if($type=="ASCII") {
 		if($tag=="0001" || $tag=="0003"){ // Latitude Reference, Longitude Reference
@@ -1885,7 +1905,8 @@ function formatGPSData($type,$tag,$intel,$data) {
 // http://drewnoakes.com/code/exif/sampleOutput.html
 // http://www.geosnapper.com
 //====================================================================
-function parseGPS($block,&$result,$offset,$seek, $globalOffset) {
+function parseGPS($block,&$result,$offset,$seek, $globalOffset) 
+{
 
 	if($result['Endien']=="Intel") $intel=1;
 	else $intel=0;
@@ -1963,7 +1984,8 @@ function parseGPS($block,&$result,$offset,$seek, $globalOffset) {
 //=================
 // Looks up the name of the tag for the MakerNote (Depends on Manufacturer)
 //====================================================================
-function lookup_Nikon_tag($tag,$model) {
+function lookup_Nikon_tag($tag,$model) 
+{
 
 	if($model==0) {
 		switch($tag) {
@@ -2047,7 +2069,8 @@ function lookup_Nikon_tag($tag,$model) {
 //=================
 // Formats Data for the data type
 //====================================================================
-function formatNikonData($type,$tag,$intel,$model,$data) {
+function formatNikonData($type,$tag,$intel,$model,$data) 
+{
 	switch ($type) {
 		case "ASCII":
 			break;	// do nothing!
@@ -2216,7 +2239,8 @@ function formatNikonData($type,$tag,$intel,$model,$data) {
 //=================
 // Nikon Special data section
 //====================================================================
-function parseNikon($block,&$result) {
+function parseNikon($block,&$result) 
+{
 
 	if($result['Endien']=="Intel") $intel=1;
 	else $intel=0;
@@ -2345,7 +2369,8 @@ function parseNikon($block,&$result) {
 //=================
 // Looks up the name of the tag for the MakerNote (Depends on Manufacturer)
 //====================================================================
-function lookup_Olympus_tag($tag) {
+function lookup_Olympus_tag($tag) 
+{
 	switch($tag) {
 		case "0200": $tag = "SpecialMode";break;
 		case "0201": $tag = "JpegQual";break;
@@ -2368,7 +2393,8 @@ function lookup_Olympus_tag($tag) {
 //=================
 // Formats Data for the data type
 //====================================================================
-function formatOlympusData($type,$tag,$intel,$data) {
+function formatOlympusData($type,$tag,$intel,$data) 
+{
 	if($type=="ASCII") {
 
 	} else if($type=="URATIONAL" || $type=="SRATIONAL") {
@@ -2411,7 +2437,8 @@ function formatOlympusData($type,$tag,$intel,$data) {
 // Olympus Special data section
 // - Updated by Zenphoto for new header tag in E-410/E-510/E-3 cameras. 2/24/2008
 //==============================================================================
-function parseOlympus($block, &$result, $seek, $globalOffset) {
+function parseOlympus($block, &$result, $seek, $globalOffset) 
+{
 
 	if($result['Endien']=="Intel") $intel = 1;
 	else $intel = 0;
@@ -2506,7 +2533,8 @@ function parseOlympus($block, &$result, $seek, $globalOffset) {
 //=================
 // Looks up the name of the tag for the MakerNote (Depends on Manufacturer)
 //====================================================================
-function lookup_Panasonic_tag($tag) {
+function lookup_Panasonic_tag($tag) 
+{
 
 	switch($tag) {
 		case "0001": $tag = "Quality";break;
@@ -2541,7 +2569,8 @@ function lookup_Panasonic_tag($tag) {
 //=================
 // Formats Data for the data type
 //====================================================================
-function formatPanasonicData($type,$tag,$intel,$data) {
+function formatPanasonicData($type,$tag,$intel,$data) 
+{
 
 	if($type=="ASCII") {
 
@@ -2553,7 +2582,7 @@ function formatPanasonicData($type,$tag,$intel,$data) {
 		if($tag=="000f") { //AFMode
 			if($data == 256) $data = "9-area-focusing";
 			else if($data == 16) $data = "1-area-focusing";
-      else if($data == 4096) $data = gettext("3-area-focusing (High speed)");
+	  else if($data == 4096) $data = gettext("3-area-focusing (High speed)");
 			else if($data == 4112) $data = gettext("1-area-focusing (High speed)");
 			else if($data == 16) $data = gettext("1-area-focusing");
 			else if($data == 1) $data = gettext("Spot-focusing");
@@ -2698,7 +2727,8 @@ function formatPanasonicData($type,$tag,$intel,$data) {
 //=================
 // Panasonic Special data section
 //====================================================================
-function parsePanasonic($block,&$result) {
+function parsePanasonic($block,&$result) 
+{
 
 	//if($result['Endien']=="Intel") $intel=1;
 	//else $intel=0;
@@ -2771,7 +2801,8 @@ function parsePanasonic($block,&$result) {
 //=================
 // Looks up the name of the tag for the MakerNote (Depends on Manufacturer)
 //====================================================================
-function lookup_Sanyo_tag($tag) {
+function lookup_Sanyo_tag($tag) 
+{
 
 	switch($tag) {
 		case "0200": $tag = "SpecialMode";break;
@@ -2789,7 +2820,8 @@ function lookup_Sanyo_tag($tag) {
 //=================
 // Formats Data for the data type
 //====================================================================
-function formatSanyoData($type,$tag,$intel,$data) {
+function formatSanyoData($type,$tag,$intel,$data) 
+{
 
 	if($type=="ASCII") {
 
@@ -2829,7 +2861,8 @@ function formatSanyoData($type,$tag,$intel,$data) {
 //=================
 // Sanyo Special data section
 //====================================================================
-function parseSanyo($block,&$result,$seek, $globalOffset) {
+function parseSanyo($block,&$result,$seek, $globalOffset) 
+{
 
 	if($result['Endien']=="Intel") $intel=1;
 	else $intel=0;

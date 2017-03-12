@@ -156,7 +156,7 @@ class GIF_Animator
 	 *
 	 * @param int $int A word-length integer (16 bit) to be converted
 	 */
-	protected function stringWord ($int)
+	protected function stringWord($int)
 	{
 		return chr($int & 0xFF) . chr(($int >> 8) & 0xFF);
 	}

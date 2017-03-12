@@ -1202,8 +1202,7 @@ function getBoardChildren($boards)
 	foreach ($boards as $k => $v)
 		$boards[$k] = (int) $v;
 
-	return cache_get_data('board_children-' . implode(',', $boards), 480, function () use ($boards)
-	{
+	return cache_get_data('board_children-' . implode(',', $boards), 480, function () use ($boards) {
 		$complete_boards = $this_iteration = $boards;
 		while (!empty($this_iteration))
 		{

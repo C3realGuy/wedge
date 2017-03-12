@@ -507,7 +507,8 @@ class getid3_matroska extends getid3_handler
 		return true;
 	}
 
-	private function parseEBML(&$info) {
+	private function parseEBML(&$info) 
+	{
 		// http://www.matroska.org/technical/specs/index.html#EBMLBasics
 		$this->current_offset = $info['avdataoffset'];
 
@@ -1205,7 +1206,8 @@ class getid3_matroska extends getid3_handler
 		}
 	}
 
-	private function EnsureBufferHasEnoughData($min_data=1024) {
+	private function EnsureBufferHasEnoughData($min_data=1024) 
+	{
 		if (($this->current_offset - $this->EBMLbuffer_offset) >= ($this->EBMLbuffer_length - $min_data)) {
 			$read_bytes = max($min_data, $this->getid3->fread_buffer_size());
 
@@ -1226,7 +1228,8 @@ class getid3_matroska extends getid3_handler
 		return true;
 	}
 
-	private function readEBMLint() {
+	private function readEBMLint() 
+	{
 		$actual_offset = $this->current_offset - $this->EBMLbuffer_offset;
 
 		// get length of integer
@@ -1258,7 +1261,8 @@ class getid3_matroska extends getid3_handler
 		return $int_value;
 	}
 
-	private function readEBMLelementData($length, $check_buffer=false) {
+	private function readEBMLelementData($length, $check_buffer=false) 
+	{
 		if ($check_buffer && !$this->EnsureBufferHasEnoughData($length)) {
 			return false;
 		}
@@ -1267,7 +1271,8 @@ class getid3_matroska extends getid3_handler
 		return $data;
 	}
 
-	private function getEBMLelement(&$element, $parent_end, $get_data=false) {
+	private function getEBMLelement(&$element, $parent_end, $get_data=false) 
+	{
 		if ($this->current_offset >= $parent_end) {
 			return false;
 		}
@@ -1303,7 +1308,8 @@ class getid3_matroska extends getid3_handler
 		return true;
 	}
 
-	private function unhandledElement($type, $line, $element) {
+	private function unhandledElement($type, $line, $element) 
+	{
 		// warn only about unknown and missed elements, not about unuseful
 		if (!in_array($element['id'], $this->unuseful_elements)) {
 			$this->warning('Unhandled '.$type.' element ['.basename(__FILE__).':'.$line.'] ('.$element['id'].'::'.$element['id_name'].' ['.$element['length'].' bytes]) at '.$element['offset']);
@@ -1315,7 +1321,8 @@ class getid3_matroska extends getid3_handler
 		}
 	}
 
-	private function ExtractCommentsSimpleTag($SimpleTagArray) {
+	private function ExtractCommentsSimpleTag($SimpleTagArray) 
+	{
 		if (!empty($SimpleTagArray['SimpleTag'])) {
 			foreach ($SimpleTagArray['SimpleTag'] as $SimpleTagKey => $SimpleTagData) {
 				if (!empty($SimpleTagData['TagName']) && !empty($SimpleTagData['TagString'])) {
@@ -1330,7 +1337,8 @@ class getid3_matroska extends getid3_handler
 		return true;
 	}
 
-	private function HandleEMBLSimpleTag($parent_end) {
+	private function HandleEMBLSimpleTag($parent_end) 
+	{
 		$simpletag_entry = array();
 
 		while ($this->getEBMLelement($element, $parent_end, array(EBML_ID_SIMPLETAG))) {
@@ -1359,7 +1367,8 @@ class getid3_matroska extends getid3_handler
 		return $simpletag_entry;
 	}
 
-	private function HandleEMBLClusterBlock($element, $block_type, &$info) {
+	private function HandleEMBLClusterBlock($element, $block_type, &$info) 
+	{
 		// http://www.matroska.org/technical/specs/index.html#block_structure
 		// http://www.matroska.org/technical/specs/index.html#simpleblock_structure
 
@@ -1422,7 +1431,8 @@ class getid3_matroska extends getid3_handler
 		return $block_data;
 	}
 
-	private static function EBML2Int($EBMLstring) {
+	private static function EBML2Int($EBMLstring) 
+	{
 		// http://matroska.org/specs/
 
 		// Element ID coded with an UTF-8 like system:
@@ -1464,13 +1474,15 @@ class getid3_matroska extends getid3_handler
 		return getid3_lib::BigEndian2Int($EBMLstring);
 	}
 
-	private static function EBMLdate2unix($EBMLdatestamp) {
+	private static function EBMLdate2unix($EBMLdatestamp) 
+	{
 		// Date - signed 8 octets integer in nanoseconds with 0 indicating the precise beginning of the millennium (at 2001-01-01T00:00:00,000000000 UTC)
 		// 978307200 == mktime(0, 0, 0, 1, 1, 2001) == January 1, 2001 12:00:00am UTC
 		return round(($EBMLdatestamp / 1000000000) + 978307200);
 	}
 
-	public static function TargetTypeValue($target_type) {
+	public static function TargetTypeValue($target_type) 
+	{
 		// http://www.matroska.org/technical/specs/tagging/index.html
 		static $TargetTypeValue = array();
 		if (empty($TargetTypeValue)) {
@@ -1485,7 +1497,8 @@ class getid3_matroska extends getid3_handler
 		return (isset($TargetTypeValue[$target_type]) ? $TargetTypeValue[$target_type] : $target_type);
 	}
 
-	public static function BlockLacingType($lacingtype) {
+	public static function BlockLacingType($lacingtype) 
+	{
 		// http://matroska.org/technical/specs/index.html#block_structure
 		static $BlockLacingType = array();
 		if (empty($BlockLacingType)) {
@@ -1497,7 +1510,8 @@ class getid3_matroska extends getid3_handler
 		return (isset($BlockLacingType[$lacingtype]) ? $BlockLacingType[$lacingtype] : $lacingtype);
 	}
 
-	public static function CodecIDtoCommonName($codecid) {
+	public static function CodecIDtoCommonName($codecid) 
+	{
 		// http://www.matroska.org/technical/specs/codecid/index.html
 		static $CodecIDlist = array();
 		if (empty($CodecIDlist)) {
@@ -1532,7 +1546,8 @@ class getid3_matroska extends getid3_handler
 		return (isset($CodecIDlist[$codecid]) ? $CodecIDlist[$codecid] : $codecid);
 	}
 
-	private static function EBMLidName($value) {
+	private static function EBMLidName($value) 
+	{
 		static $EBMLidList = array();
 		if (empty($EBMLidList)) {
 			$EBMLidList[EBML_ID_ASPECTRATIOTYPE]            = 'AspectRatioType';
@@ -1730,7 +1745,8 @@ class getid3_matroska extends getid3_handler
 		return (isset($EBMLidList[$value]) ? $EBMLidList[$value] : dechex($value));
 	}
 
-	public static function displayUnit($value) {
+	public static function displayUnit($value) 
+	{
 		// http://www.matroska.org/technical/specs/index.html#DisplayUnit
 		static $units = array(
 			0 => 'pixels',

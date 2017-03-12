@@ -18,7 +18,8 @@ getid3_lib::IncludeDependency(GETID3_INCLUDEPATH.'module.audio-video.riff.php', 
 class getid3_real extends getid3_handler
 {
 
-	public function Analyze() {
+	public function Analyze() 
+	{
 		$info = &$this->getid3->info;
 
 		$info['fileformat']       = 'real';
@@ -370,7 +371,8 @@ class getid3_real extends getid3_handler
 	}
 
 
-	public function ParseOldRAheader($OldRAheaderData, &$ParsedArray) {
+	public function ParseOldRAheader($OldRAheaderData, &$ParsedArray) 
+	{
 		// http://www.freelists.org/archives/matroska-devel/07-2003/msg00010.html
 
 		$ParsedArray = array();
@@ -484,7 +486,8 @@ class getid3_real extends getid3_handler
 		return true;
 	}
 
-	public function RealAudioCodecFourCClookup($fourcc, $bitrate) {
+	public function RealAudioCodecFourCClookup($fourcc, $bitrate) 
+	{
 		static $RealAudioCodecFourCClookup = array();
 		if (empty($RealAudioCodecFourCClookup)) {
 			// http://www.its.msstate.edu/net/real/reports/config/tags.stats

@@ -15,98 +15,119 @@
 class Map implements Iterator {
 	protected $values = array();
 
-	public function __construct($values = null) {
+	public function __construct($values = null) 
+	{
 		if (is_array($values)) $this->merge($values);
 	}
 
 	// Map
 
-	public function clear() {
+	public function clear() 
+	{
 		$this->values = array();
 	}
 
-	public function copy() {
+	public function copy() 
+	{
 		return clone $this;
 	}
 
-	public function get($key) {
+	public function get($key) 
+	{
 		return @$this->values[(string) $key];
 	}
 
-	public function getKeys() {
+	public function getKeys() 
+	{
 		return array_keys($this->values);
 	}
 
-	public function getValues() {
+	public function getValues() 
+	{
 		return array_values($this->values);
 	}
 
-	public function has($key) {
+	public function has($key) 
+	{
 		return array_key_exists((string)$key, $this->values);
 	}
 
-	public function merge($values) {
+	public function merge($values) 
+	{
 		foreach ($values as $key => $value)
 			$this->put($key, $value);
 		return $this;
 	}
 
-	public function put($key = '', $value = null) {
+	public function put($key = '', $value = null) 
+	{
 		$this->values[(string)$key] = $value;
 	}
 
-	public function remove($key) {
+	public function remove($key) 
+	{
 		unset($this->values[(string)$key]);
 	}
 
-	public function size() {
+	public function size() 
+	{
 		return count($this->values);
 	}
 
-	public function union($values) {
+	public function union($values) 
+	{
 		return $this->copy()->merge($values);
 	}
 
 	// Iterator
 
-	public function rewind() {
+	public function rewind() 
+	{
 		reset($this->values);
 	}
 
-	public function current() {
+	public function current() 
+	{
 		return current($this->values);
 	}
 
-	public function key() {
+	public function key() 
+	{
 		return key($this->values);
 	}
 
-	public function next() {
+	public function next() 
+	{
 		return next($this->values);
 	}
 
-	public function previous() {
+	public function previous() 
+	{
 		return previous($this->values);
 	}
 
-	public function valid() {
+	public function valid() 
+	{
 		return !is_null(key($this->values));
 	}
 
 	// Enumerable
 
-	public function every($test) {
+	public function every($test) 
+	{
 		foreach ($this->values as $key => $value) {
 			if (!$test($value, $key)) return false;
 		}
 		return true;
 	}
 
-	public function filter($test) {
+	public function filter($test) 
+	{
 		return new self(array_filter($this->values, $test));
 	}
 
-	public function invoke($method) {
+	public function invoke($method) 
+	{
 		$result = array();
 		foreach ($this->values as $value) {
 			array_push($result, call_user_func(array(&$value, $method)));
@@ -114,7 +135,8 @@ class Map implements Iterator {
 		return $result;
 	}
 
-	public function pluck($key) {
+	public function pluck($key) 
+	{
 		$result = array();
 		foreach ($this->values as $value) {
 			array_push($result, $value->{$key});
@@ -122,11 +144,13 @@ class Map implements Iterator {
 		return $result;
 	}
 
-	public function reduce($callback, $initial) {
+	public function reduce($callback, $initial) 
+	{
 		return array_reduce($this->values, $callback, $initial);
 	}
 
-	public function some($test) {
+	public function some($test) 
+	{
 		foreach ($this->values as $key => $value) {
 			if ($test($value, $key)) return true;
 		}
@@ -135,11 +159,13 @@ class Map implements Iterator {
 }
 
 class Collection extends Map {
-	public function __toString() {
+	public function __toString() 
+	{
 		return '('.implode(',', $this->getKeys()).')';
 	}
 
-	public function add($key, $item = null) {
+	public function add($key, $item = null) 
+	{
 		// Duplicates not allowed using add().
 		// But you can still overwrite entries using put().
 		assert(!$this->has($key));
@@ -147,15 +173,18 @@ class Collection extends Map {
 		$this->put($key, $item);
 	}
 
-	public function getAt($index) {
+	public function getAt($index) 
+	{
 		return $this->get($this->getKey($index));
 	}
 
-	public function indexOf($key) {
+	public function indexOf($key) 
+	{
 		return array_search($key, $this->getKeys());
 	}
 
-	public function insertAt($index, $key, $item) {
+	public function insertAt($index, $key, $item) 
+	{
 		assert($this->isValidIndex($index));
 		assert(!$this->has($key));
 
@@ -163,28 +192,33 @@ class Collection extends Map {
 		$this->put($key, $item);
 	}
 
-	public function item($key) {
+	public function item($key) 
+	{
 		if (is_int($key))
 			$key = $this->getKey($key);
 		return $this->get($key);
 	}
 
-	public function putAt($index, $item) {
+	public function putAt($index, $item) 
+	{
 		assert($this->isValidIndex($index));
 
 		$this->put($this->getKey($index), $item);
 	}
 
-	public function removeAt($index) {
+	public function removeAt($index) 
+	{
 		$this->remove($this->getKey($index));
 	}
 
-	public function reverse() {
+	public function reverse() 
+	{
 		array_reverse($this->values, TRUE);
 		return $this;
 	}
 
-	public function sort($sorter = null) {
+	public function sort($sorter = null) 
+	{
 		if (isset($sorter))
 			uasort($this->values, $sorter);
 		else
@@ -192,7 +226,8 @@ class Collection extends Map {
 		return $this;
 	}
 
-	public function slice($start = 0, $end = null) {
+	public function slice($start = 0, $end = null) 
+	{
 		$values = $this->values;
 		$length = $end;
 		if (isset($end) && $end > 0)
@@ -203,14 +238,16 @@ class Collection extends Map {
 		return $sliced;
 	}
 
-	private function getKey($index) {
+	private function getKey($index) 
+	{
 		$size = $this->size();
 		if ($index < 0) $index += $size;
 		$keys = $this->getKeys();
 		return $keys[$index];
 	}
 
-	private function isValidIndex($index) {
+	private function isValidIndex($index) 
+	{
 		$size = $this->size();
 		if ($index < 0) $index += $size;
 		return ($index >= 0) && ($index < $size);
@@ -228,7 +265,8 @@ class RegGrp extends Collection {
 	private static $ESCAPE_BRACKETS = '/\\(\\?[:=!]|\\[[^\\]]+\\]/';
 	private static $BRACKETS		= '/\\(/';
 
-	public static function count($expression) {
+	public static function count($expression) 
+	{
 		// Count the number of sub-expressions in a RegExp/RegGrp.Item.
 		$expression = preg_replace(self::$ESCAPE_CHARS, '', (string)$expression);
 		$expression = preg_replace(self::$ESCAPE_BRACKETS, '', $expression);
@@ -239,17 +277,20 @@ class RegGrp extends Collection {
 
 	private $offset = 0;
 
-	public function __construct($values = null, $ignoreCase = false) {
+	public function __construct($values = null, $ignoreCase = false) 
+	{
 		parent::__construct($values);
 		$this->ignoreCase = !!$ignoreCase;
 	}
 
-	public function __toString() {
+	public function __toString() 
+	{
 		$this->offset = 1;
 		return '('.implode(')|(', array_map(array(&$this, '_item_toString'), $this->getValues())).')';
 	}
 
-	public function exec($string, $override = null) {
+	public function exec($string, $override = null) 
+	{
 		if ($this->size() == 0) return (string)$string;
 		if (isset($override)) $this->_override = $override;
 		$result = preg_replace_callback('/'.$this.'/', array(&$this, '_replacer'), $string);
@@ -257,22 +298,26 @@ class RegGrp extends Collection {
 		return $result;
 	}
 
-	public function test($string) {
+	public function test($string) 
+	{
 		// Not implemented
 	}
 
-	private function _item_toString($item) {
+	private function _item_toString($item) 
+	{
 		// Fix back references.
 		$expression = preg_replace_callback(self::$BACK_REF, array(&$this, '_fixBackReference'), (string) $item);
 		$this->offset += $item->length + 1;
 		return $expression;
 	}
 
-	private function _fixBackReference($match, $index) {
+	private function _fixBackReference($match, $index) 
+	{
 		return '\\'.($this->offset + (int)$index);
 	}
 
-	private function _replacer($arguments) {
+	private function _replacer($arguments) 
+	{
 		if (empty($arguments)) return '';
 
 		$offset = 1; $i = 0;
@@ -293,7 +338,8 @@ class RegGrp extends Collection {
 		return $arguments[0];
 	}
 
-	public function put($key = '', $item = null) {
+	public function put($key = '', $item = null) 
+	{
 		if (!($item instanceof RegGrpItem)) {
 			$item = new RegGrpItem($key, $item);
 		}
@@ -316,7 +362,8 @@ class RegGrpItem {
 	private $expression	= '';
 	public	$replacement = '';
 
-	public function __construct($expression, $replacement = RegGrp::IGNORE) {
+	public function __construct($expression, $replacement = RegGrp::IGNORE) 
+	{
 		if ($replacement instanceof RegGrpItem) $replacement = $replacement->replacement;
 
 		// Does the pattern use sub-expressions?
@@ -338,7 +385,8 @@ class RegGrpItem {
 		$this->replacement = $replacement;
 	}
 
-	public function __get($key) {
+	public function __get($key) 
+	{
 		$value = null;
 		if ($key == 'length') {
 			$value = RegGrp::count($this->expression);
@@ -346,7 +394,8 @@ class RegGrpItem {
 		return $value;
 	}
 
-	public function __toString() {
+	public function __toString() 
+	{
 		return $this->expression;
 	}
 }
@@ -355,12 +404,14 @@ class RegGrpItem {
 /* include('Words.php'); */
 
 class Words extends Collection {
-	public static function sorter($word1, $word2) {
+	public static function sorter($word1, $word2) 
+	{
 		$diff = $word2->count - $word1->count;
 		return $diff == 0 ? $word1->index - $word2->index : $diff;
 	}
 
-	public function add($word, $item = null) {
+	public function add($word, $item = null) 
+	{
 		if (!$this->has($word)) parent::add($word);
 		$word = $this->get($word);
 		if ($word->index == 0) {
@@ -370,14 +421,16 @@ class Words extends Collection {
 		return $word;
 	}
 
-	public function put($key = '', $item = null) {
+	public function put($key = '', $item = null) 
+	{
 		if (!($item instanceof Word)) {
 			$item = new Word($key);
 		}
 		parent::put($key, $item);
 	}
 
-	public function sort($sorter = null) {
+	public function sort($sorter = null) 
+	{
 		if (!isset($sorter)) {
 			$sorter = array('Words', 'sorter');
 		}
@@ -391,15 +444,18 @@ class Word {
 	public $index = 0;
 	private $text = '';
 
-	public function __construct($text) {
+	public function __construct($text) 
+	{
 		$this->text = $text;
 	}
 
-	public function __toString() {
+	public function __toString() 
+	{
 		return $this->text;
 	}
 
-	public function clear() {
+	public function clear() 
+	{
 		$this->text = '';
 	}
 }
@@ -418,7 +474,8 @@ class Parser extends RegGrp {
 		'STRING2'		=> '"(\\\\.|[^"\\\\])*?"'
 	);
 
-	public function put($expression = '', $replacement = null) {
+	public function put($expression = '', $replacement = null) 
+	{
 		parent::put(Parser::$dictionary->exec($expression), $replacement);
 	}
 }
@@ -433,19 +490,22 @@ class Encoder {
 	private $parser;
 	private $encoder;
 
-	public function __construct($pattern = null, $encoder = null, $ignore = null) {
+	public function __construct($pattern = null, $encoder = null, $ignore = null) 
+	{
 		$this->parser = new Parser($ignore);
 		if (isset($pattern)) $this->parser->put($pattern, '');
 		$this->encoder = $encoder;
 	}
 
-	public function search($script) {
+	public function search($script) 
+	{
 		$this->words = new Words;
 		$this->parser->putAt(-1, array(&$this, '_addWord'));
 		$this->parser->exec($script);
 	}
 
-	public function encode($script) {
+	public function encode($script) 
+	{
 		$this->search($script);
 		$this->words->sort();
 		$index = 0;
@@ -458,11 +518,13 @@ class Encoder {
 		return $script;
 	}
 
-	public function _replacer($word) {
+	public function _replacer($word) 
+	{
 		return $this->words->get($word)->encoded;
 	}
 
-	public function _addWord($word) {
+	public function _addWord($word) 
+	{
 		$this->words->add($word);
 		return $word;
 	}
@@ -479,7 +541,8 @@ class Packer {
 		'(OPERATOR)\\s*(REGEXP)' => '$1$2'
 	);
 
-	public static function encode52($n) {
+	public static function encode52($n) 
+	{
 		$left = $n < 52 ? '' : self::encode52((int)($n / 52));
 		$n = $n % 52;
 		$right = $n > 25 ? chr($n + 39) : chr($n + 97);
@@ -490,7 +553,8 @@ class Packer {
 		return $encoded;
 	}
 
-	public static function encode62($n) {
+	public static function encode62($n) 
+	{
 		$left = $n < 62 ? '' : self::encode62((int)($n / 62));
 		$n = $n % 62;
 		$right = $n > 35 ? chr($n + 29) : base_convert($n, 10, 36);
@@ -502,14 +566,16 @@ class Packer {
 	private $privates;
 	private $base62;
 
-	public function __construct() {
+	public function __construct() 
+	{
 		$this->minifier = new Minifier;
 		$this->shrinker = new Shrinker;
 		// $this->privates = new Privates;
 		// $this->base62 = new Base62;
 	}
 
-	public function pack($script) {
+	public function pack($script) 
+	{
 		// Minification (remove useless whitespace)
 		$script = $this->minifier->minify($script);
 		// Shrinking (shorten local variable names)
@@ -530,7 +596,8 @@ Packer::$data = new Parser(Packer::$data);
 /* include('Minifier.php'); */
 
 class Minifier {
-	public function minify($script) {
+	public function minify($script) 
+	{
 		$script .= "\n";
 		$script = preg_replace('/\\\\\\r?\\n/', '', $script);
 		$script = self::$comments->exec($script);
@@ -556,7 +623,8 @@ class Minifier {
 		'(COMMENT2)\\s*(REGEXP)?' => array(__CLASS__, '_commentParser')
 	);
 
-	public static function _commentParser($match, $comment = '', $dummy = '', $regexp = '') {
+	public static function _commentParser($match, $comment = '', $dummy = '', $regexp = '') 
+	{
 		if (preg_match('/^\\/\\*@/', $comment) && preg_match('/@\\*\\/$/', $comment)) {
 			$comment = self::$conditionalComments->exec($comment);
 		} else {
@@ -572,7 +640,8 @@ class Minifier {
 		'(STRING2)\\+(STRING2)' => array(__CLASS__, '_concatenater')
 	);
 
-	public static function _concatenater($match, $string1, $plus, $string2) {
+	public static function _concatenater($match, $string1, $plus, $string2) 
+	{
 		return substr($string1, 0, -1).substr($string2, 1);
 	}
 
@@ -614,7 +683,8 @@ class Shrinker {
 
 	private static $ESCAPE = '/([\\/()[\\]{}|*+-.,^$?\\\\])/';
 
-	public static function rescape($string) {
+	public static function rescape($string) 
+	{
 		// Make a string safe for creating a RegExp.
 		return preg_replace(self::$ESCAPE, '\\\\$1', $string);
 	}
@@ -637,7 +707,8 @@ class Shrinker {
 	private $data;	 // Store program data (strings and regexps)
 	private $script;
 
-	public function shrink($script = '') {
+	public function shrink($script = '') 
+	{
 		$script = $this->encodeData($script);
 
 		$this->blocks = array();
@@ -653,7 +724,8 @@ class Shrinker {
 		return $this->decodeData($script);
 	}
 
-	private function decodeBlocks($script, $encoded) {
+	private function decodeBlocks($script, $encoded) 
+	{
 		// Put the blocks back
 		while (preg_match($encoded, $script)) {
 			$script = preg_replace_callback($encoded, array(&$this, '_blockDecoder'), $script);
@@ -661,7 +733,8 @@ class Shrinker {
 		return $script;
 	}
 
-	private function encodeBlocks($script) {
+	private function encodeBlocks($script) 
+	{
 		// Encode blocks, as we encode we replace variable and argument names
 		while (preg_match($this->BLOCK, $script)) {
 			$script = preg_replace_callback($this->BLOCK, array(&$this, '_blockEncoder'), $script);
@@ -669,14 +742,16 @@ class Shrinker {
 		return $script;
 	}
 
-	private function decodeData($script) {
+	private function decodeData($script) 
+	{
 		// Put strings and regular expressions back
 		$script = preg_replace_callback($this->ENCODED_DATA, array(&$this, '_dataDecoder'), $script);
 		unset($this->data);
 		return $script;
 	}
 
-	private function encodeData($script) {
+	private function encodeData($script) 
+	{
 		$this->data = array(); // Encoded strings and regular expressions
 		// Encode strings and regular expressions
 		return Packer::$data->exec($script, array(&$this, '_dataEncoder'));
@@ -684,11 +759,13 @@ class Shrinker {
 
 	/* Callback functions (public because of php's crappy scoping) */
 
-	public function _blockDecoder($matches) {
+	public function _blockDecoder($matches) 
+	{
 		return $this->blocks[$matches[1]];
 	}
 
-	public function _blockEncoder($match) {
+	public function _blockEncoder($match) 
+	{
 		$prefix = $match[1]; $blockType = $match[2]; $args = $match[3]; $block = $match[4];
 		if (!$prefix) $prefix = '';
 		if ($blockType == 'function') {
@@ -741,11 +818,13 @@ class Shrinker {
 		return $replacement;
 	}
 
-	public function _dataDecoder($matches) {
+	public function _dataDecoder($matches) 
+	{
 		return $this->data[$matches[1]];
 	}
 
-	public function _dataEncoder($match, $operator = '', $regexp = '') {
+	public function _dataEncoder($match, $operator = '', $regexp = '') 
+	{
 		$replacement = "\x01".count($this->data)."\x01";
 		if ($regexp) {
 			$replacement = $operator.$replacement;
@@ -755,7 +834,8 @@ class Shrinker {
 		return $replacement;
 	}
 
-	public function _varEncoder() {
+	public function _varEncoder() 
+	{
 		// Find the next free short name
 		do $shortId = Packer::encode52($this->count++);
 		while (preg_match('/[^\\w$.]'.$shortId.'[^\\w$:]/', $this->script));
