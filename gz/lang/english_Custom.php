@@ -1,0 +1,1 @@
+<?php if(defined('WEDGE'))$val='a:0:{}';?>

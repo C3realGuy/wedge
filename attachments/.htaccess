@@ -1,0 +1,10 @@
+
+<Files *>
+	Order Deny,Allow
+	Deny from all
+	Allow from localhost
+</Files>
+
+<IfModule mod_mime.c>
+	RemoveHandler .php .php3 .phtml .cgi .fcgi .pl .fpl .shtml
+</IfModule>

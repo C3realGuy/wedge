@@ -1,0 +1,1 @@
+<?php if(defined('WEDGE')&&$valid=time()<1493038070)$val='a:2:{s:4:"data";a:1:{i:0;s:24:"eWedge - Just Installed!";}s:7:"expires";i:1493038070;}';

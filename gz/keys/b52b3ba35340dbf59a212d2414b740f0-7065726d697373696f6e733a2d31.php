@@ -1,0 +1,1 @@
+<?php if(defined('WEDGE')&&$valid=time()<1493031555)$val='a:2:{i:0;a:3:{i:0;s:16:"profile_view_any";i:1;s:12:"search_posts";i:2;s:10:"view_stats";}i:1;a:0:{}}';

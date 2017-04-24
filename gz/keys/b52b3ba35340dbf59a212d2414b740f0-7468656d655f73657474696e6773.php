@@ -1,0 +1,1 @@
+<?php if(defined('WEDGE')&&$valid=time()<1493031368)$val='a:2:{i:-1;a:5:{s:19:"display_quick_reply";s:1:"2";s:23:"posts_apply_ignore_list";s:1:"1";s:14:"return_to_post";s:1:"1";s:20:"view_newest_pm_first";s:1:"1";s:21:"pm_remove_inbox_label";s:1:"1";}i:0;a:0:{}}';

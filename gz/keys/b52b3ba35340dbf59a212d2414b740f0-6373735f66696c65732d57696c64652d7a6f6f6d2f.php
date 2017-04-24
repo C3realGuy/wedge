@@ -1,0 +1,1 @@
+<?php if(defined('WEDGE')&&$valid=1)$val='a:4:{i:4;s:3:"rtl";i:28;s:3:"ios";i:21;s:7:"android";i:25;s:6:"mobile";}';

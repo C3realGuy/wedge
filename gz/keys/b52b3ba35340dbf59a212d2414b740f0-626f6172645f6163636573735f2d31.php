@@ -1,0 +1,1 @@
+<?php if(defined('WEDGE')&&$valid=time()<1493031622)$val='a:4:{s:16:"query_list_board";s:17:"b.id_board IN (1)";s:15:"query_see_board";s:17:"b.id_board IN (1)";s:10:"qlb_boards";a:1:{i:0;s:1:"1";}s:10:"qsb_boards";a:1:{i:0;s:1:"1";}}';

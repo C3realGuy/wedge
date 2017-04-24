@@ -1,0 +1,1054 @@
+<?php
+
+
+
+
+
+
+
+
+
+define('PRIVACY_DEFAULT', 0);
+define('PRIVACY_MEMBERS', 1);
+define('PRIVACY_AUTHOR', 99);
+
+class we
+{
+	static $ua, $browser, $os;
+	static $user, $id, $is;
+	static $is_admin;
+	static $is_guest, $is_member;
+	static $cache;
+
+
+	private function __clone() {}
+
+	public static function &getInstance($load_user = true)
+	{
+		static $instance = null;
+
+
+		if ($instance == null)
+		{
+			$instance = new self();
+			self::$ua = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '';
+			if ($load_user)
+				self::init_user();
+			self::init_browser();
+		}
+
+		return $instance;
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	protected static function init_user()
+	{
+		global $context, $settings, $user_settings, $cookiename;
+
+		$id_member = 0;
+
+
+		if (count($hook_ids = call_hook('verify_user')) > 0)
+		{
+			foreach ($hook_ids as $hook_id)
+			{
+				$hook_id = (int) $hook_id;
+				if ($hook_id > 0)
+				{
+					$id_member = $hook_id;
+					$already_verified = true;
+					break;
+				}
+			}
+		}
+
+
+		if (isset($_REQUEST['upcook']))
+			$_COOKIE[$cookiename] = base64_decode(urldecode($_REQUEST['upcook']));
+
+		if (empty($id_member) && isset($_COOKIE[$cookiename]))
+		{
+			list ($id_member, $password) = @unserialize($_COOKIE[$cookiename]);
+			$id_member = !empty($id_member) && strlen($password) > 0 ? (int) $id_member : 0;
+		}
+		elseif (empty($id_member) && isset($_SESSION['login_' . $cookiename]) && ($_SESSION['USER_AGENT'] == self::$ua || !empty($settings['disableCheckUA'])))
+		{
+
+			list ($id_member, $password, $login_span) = @unserialize($_SESSION['login_' . $cookiename]);
+			$id_member = !empty($id_member) && strlen($password) == 40 && $login_span > time() ? (int) $id_member : 0;
+		}
+		self::$id = $id_member;
+
+
+		if ($id_member != 0)
+		{
+
+			if (empty($settings['cache_enable']) || $settings['cache_enable'] < 2 || ($user_settings = cache_get_data('user_settings-' . $id_member, 60)) === null)
+			{
+				$request = wesql::query('
+					SELECT
+						mem.*, IFNULL(a.id_attach, 0) AS id_attach, a.filename, a.attachment_type, a.id_folder, a.transparency
+					FROM {db_prefix}members AS mem
+						LEFT JOIN {db_prefix}attachments AS a ON (a.id_member = {int:id_member})
+					WHERE mem.id_member = {int:id_member}
+					LIMIT 1',
+					array(
+						'id_member' => $id_member,
+					)
+				);
+				$user_settings = wesql::fetch_assoc($request);
+				$user_settings['data'] = $user_settings['data'] !== '' ? unserialize($user_settings['data']) : array();
+				wesql::free_result($request);
+
+				if (!empty($settings['cache_enable']) && $settings['cache_enable'] >= 2)
+					cache_put_data('user_settings-' . $id_member, $user_settings, 60);
+			}
+
+
+			if (!empty($user_settings))
+			{
+
+				if (!empty($already_verified) && $already_verified === true)
+					$check = true;
+
+				elseif (strlen($password) == 40)
+					$check = sha1($user_settings['passwd'] . $user_settings['password_salt']) == $password;
+				else
+					$check = false;
+
+
+				$real_status = $user_settings['is_activated'] % 10;
+				$id_member = $check && ($real_status == 1 || $real_status == 6) ? $user_settings['id_member'] : 0;
+			}
+			else
+				$id_member = 0;
+
+
+			if (!$id_member)
+			{
+				loadSource('Subs-Login');
+				validatePasswordFlood(!empty($user_settings['id_member']) ? $user_settings['id_member'] : $id_member, !empty($user_settings['passwd_flood']) ? $user_settings['passwd_flood'] : false, $id_member != 0);
+			}
+		}
+
+
+		if ($id_member)
+		{
+
+
+
+
+			if (WEDGE != 'SSI' && !AJAX && ($context['action'] !== 'feed') && empty($_SESSION['id_msg_last_visit']) && (empty($settings['cache_enable']) || ($_SESSION['id_msg_last_visit'] = cache_get_data('user_last_visit-' . $id_member, 18000)) === null))
+			{
+
+				$result = wesql::query('
+					SELECT poster_time
+					FROM {db_prefix}messages
+					WHERE id_msg = {int:id_msg}
+					LIMIT 1',
+					array(
+						'id_msg' => $user_settings['id_msg_last_visit'],
+					)
+				);
+				list ($visitTime) = wesql::fetch_row($result);
+				wesql::free_result($result);
+
+				$_SESSION['id_msg_last_visit'] = $user_settings['id_msg_last_visit'];
+
+
+				if ($visitTime < time() - 18000)
+				{
+					updateMemberData($id_member, array('id_msg_last_visit' => (int) $settings['maxMsgID'], 'last_login' => time(), 'member_ip' => $_SERVER['REMOTE_ADDR'], 'member_ip2' => $_SERVER['BAN_CHECK_IP']));
+					$user_settings['last_login'] = time();
+
+					if (!empty($settings['cache_enable']) && $settings['cache_enable'] >= 2)
+						cache_put_data('user_settings-' . $id_member, $user_settings, 60);
+
+					if (!empty($settings['cache_enable']))
+						cache_put_data('user_last_visit-' . $id_member, $_SESSION['id_msg_last_visit'], 18000);
+				}
+			}
+			elseif (empty($_SESSION['id_msg_last_visit']))
+				$_SESSION['id_msg_last_visit'] = $user_settings['id_msg_last_visit'];
+
+			$username = $user_settings['member_name'];
+
+			if (empty($user_settings['additional_groups']))
+				$user = array(
+					'groups' => array($user_settings['id_group'], $user_settings['id_post_group'])
+				);
+			else
+				$user = array(
+					'groups' => array_merge(
+						array($user_settings['id_group'], $user_settings['id_post_group']),
+						explode(',', $user_settings['additional_groups'])
+					)
+				);
+
+
+			foreach ($user['groups'] as $k => $v)
+				$user['groups'][$k] = (int) $v;
+
+
+			$user['possibly_robot'] = false;
+		}
+
+		else
+		{
+
+			$username = '';
+			$user = array('groups' => array(-1));
+			$user_settings = array();
+
+			if (isset($_COOKIE[$cookiename]))
+				$_COOKIE[$cookiename] = '';
+
+
+			$wild_guess = !strhas(self::$ua, array('Mozilla', 'Opera')) || strhas(strtolower(self::$ua), array('bot', 'slurp', 'crawl', 'spider'));
+
+
+			if ((!empty($settings['spider_mode']) || !empty($settings['spider_group'])) && (!isset($_SESSION['robot_check']) || $_SESSION['robot_check'] < time() - 300))
+			{
+				loadSource('ManageSearchEngines');
+				$user['possibly_robot'] = SpiderCheck() || $wild_guess;
+			}
+			elseif (!empty($settings['spider_mode']))
+				$user['possibly_robot'] = isset($_SESSION['id_robot']) ? $_SESSION['id_robot'] : false;
+			else
+				$user['possibly_robot'] = $wild_guess;
+		}
+
+
+		if (!empty($user_settings['timezone']))
+		{
+
+			$tz_system = new DateTimeZone(@date_default_timezone_get());
+			$tz_user = new DateTimeZone($user_settings['timezone']);
+			$time_system = new DateTime("now", $tz_system);
+			$time_user = new DateTime("now", $tz_user);
+			$offset = ($tz_user->getOffset($time_user) - $tz_system->getOffset($time_system)) / 3600;
+		}
+
+		if (!empty($user_settings['id_attach']) && !$user_settings['transparency'])
+		{
+			$filename = getAttachmentFilename($user_settings['filename'], $user_settings['id_attach'], $user_settings['id_folder']);
+			$user_settings['transparency'] =
+				we_resetTransparency(
+					$user_settings['id_attach'],
+					empty($user_settings['attachment_type']) ? $filename : $settings['custom_avatar_dir'] . '/' . $user_settings['filename'],
+					$user_settings['filename']
+				) ? 'transparent' : 'opaque';
+		}
+
+
+		if (!isset($_SESSION['is_mobile']))
+			$_SESSION['is_mobile'] = self::is_mobile();
+
+		if (isset($_COOKIE['guest_skin']))
+		{
+			if ($id_member === 0)
+				$user_settings['skin'] = $user_settings['skin_mobile'] = $_COOKIE['guest_skin'];
+			else
+			{
+				loadSource('Subs-Auth');
+				$cookie_url = url_parts(!empty($settings['localCookies']), !empty($settings['globalCookies']));
+				setcookie('guest_skin', '', time() - 3600, $cookie_url[1], $cookie_url[0], 0, true);
+			}
+		}
+
+
+		$user += array(
+			'username' => $username,
+			'name' => $id_member == 0 ? '' : (isset($user_settings['real_name']) ? $user_settings['real_name'] : ''),
+			'email' => isset($user_settings['email_address']) ? $user_settings['email_address'] : '',
+			'activated' => !empty($user_settings['is_activated']) ? $user_settings['is_activated'] : 0,
+			'passwd' => isset($user_settings['passwd']) ? $user_settings['passwd'] : '',
+			'language' => self::get_preferred_language(isset($user_settings['lngfile']) ? $user_settings['lngfile'] : ''),
+			'skin' => $_SESSION['is_mobile'] ? (empty($user_settings['skin_mobile']) ? '' : $user_settings['skin_mobile']) : (empty($user_settings['skin']) ? '' : $user_settings['skin']),
+			'last_login' => empty($user_settings['last_login']) ? 0 : $user_settings['last_login'],
+			'ip' => $_SERVER['REMOTE_ADDR'],
+			'ip2' => $_SERVER['BAN_CHECK_IP'],
+			'posts' => empty($user_settings['posts']) ? 0 : $user_settings['posts'],
+			'time_format' => empty($user_settings['time_format']) ? '' : $user_settings['time_format'],
+			'time_offset' => isset($offset) ? $offset : (empty($user_settings['time_offset']) ? 0 : $user_settings['time_offset']),
+			'avatar' => array(
+				'href' => '',
+				'url' => isset($user_settings['avatar']) ? $user_settings['avatar'] : '',
+				'filename' => empty($user_settings['filename']) ? '' : $user_settings['filename'],
+				'custom_dir' => !empty($user_settings['attachment_type']) && $user_settings['attachment_type'] == 1,
+				'id_attach' => isset($user_settings['id_attach']) ? $user_settings['id_attach'] : 0,
+				'transparent' => !empty($user_settings['transparency']) && $user_settings['transparency'] == 'transparent'
+			),
+			'data' => isset($user_settings['data']) && $user_settings['data'] !== '' ? $user_settings['data'] : array(),
+			'smiley_set' => isset($user_settings['smiley_set']) ? $user_settings['smiley_set'] : '',
+			'messages' => empty($settings['pm_enabled']) || empty($user_settings['instant_messages']) ? 0 : $user_settings['instant_messages'],
+			'unread_messages' => empty($settings['pm_enabled']) || empty($user_settings['unread_messages']) ? 0 : $user_settings['unread_messages'],
+			'unread_notifications' => !empty($user_settings['unread_notifications']) ? $user_settings['unread_notifications'] : 0,
+			'media_unseen' => empty($user_settings['media_unseen']) ? 0 : $user_settings['media_unseen'],
+			'total_time_logged_in' => empty($user_settings['total_time_logged_in']) ? 0 : $user_settings['total_time_logged_in'],
+			'contacts' => array(),
+			'buddies' => !empty($settings['enable_buddylist']) && !empty($user_settings['buddy_list']) ? explode(',', $user_settings['buddy_list']) : array(),
+			'ignoreboards' => !empty($user_settings['ignore_boards']) && !empty($settings['ignorable_boards']) ? explode(',', $user_settings['ignore_boards']) : array(),
+			'ignoreusers' => !empty($user_settings['pm_ignore_list']) ? explode(',', $user_settings['pm_ignore_list']) : array(),
+			'warning' => isset($user_settings['warning']) ? $user_settings['warning'] : 0,
+			'permissions' => array(),
+			'post_moderated' => false,
+			'sanctions' => !empty($user_settings['data']['sanctions']) ? $user_settings['data']['sanctions'] : array(),
+		);
+
+		$temp = array(
+			'lists' => array(),
+			'users' => array(),
+			'groups' => array(),
+			'ignored' => array(),
+			'all' => array(),
+			'privacy' => PRIVACY_DEFAULT,
+		);
+
+		if ($id_member)
+		{
+			$cached = cache_get_data('contacts_' . $id_member, 3000);
+			if ($cached === null)
+			{
+
+				$request = wesql::query('
+					SELECT id_list, id_member, list_type
+					FROM {db_prefix}contacts
+					WHERE id_owner = {int:user}',
+					array(
+						'user' => $id_member,
+					)
+				);
+				while ($row = wesql::fetch_assoc($request))
+				{
+
+					$temp[$row['list_type'] == 'restrict' ? 'ignored' : 'all'][$row['id_member']] = 1;
+					$temp['users'][$row['id_list']][$row['id_member']] = 1;
+				}
+				wesql::free_result($request);
+
+
+				$request = wesql::query('
+					SELECT id_list, list_type, name
+					FROM {db_prefix}contact_lists
+					WHERE id_owner = {int:me}
+					ORDER BY position, id_list',
+					array(
+						'me' => $id_member,
+					)
+				);
+				while ($row = wesql::fetch_assoc($request))
+					$temp['lists'][$row['id_list']] = array($row['name'], $row['list_type']);
+				wesql::free_result($request);
+
+
+
+				$request = wesql::query('
+					SELECT id_group, group_name, min_posts
+					FROM {db_prefix}membergroups' . (in_array(1, $user['groups']) ? '' : '
+					WHERE (' . (empty($user['groups']) ? '0=1' : 'id_group IN ({array_int:my_groups})') . ')
+						OR (min_posts != {int:non_postbased} AND min_posts <= {int:num_posts})') . '
+					ORDER BY min_posts, id_group',
+					array(
+						'my_groups' => $user['groups'],
+						'num_posts' => $user['posts'],
+						'non_postbased' => -1,
+					)
+				);
+				while ($row = wesql::fetch_assoc($request))
+					$temp['groups'][$row['id_group']] = array($row['group_name'], $row['min_posts']);
+				wesql::free_result($request);
+
+
+				$request = wesql::query('
+					SELECT id_list, id_owner, list_type
+					FROM {db_prefix}contacts
+					WHERE id_member = {int:me}',
+					array(
+						'me' => $id_member,
+					)
+				);
+				$restrict = array();
+				$in_lists = count($temp['lists']) ? array_combine(array_keys($temp['lists']), array_fill(0, count($temp['lists']), $id_member)) : array();
+				while ($row = wesql::fetch_assoc($request))
+				{
+					if ($row['list_type'] === 'restrict')
+						$restrict[$row['id_owner']] = $row['id_owner'];
+					else
+						$in_lists[$row['id_list']] = $row['id_owner'];
+				}
+				wesql::free_result($request);
+
+
+				$in_lists = array_keys(array_diff($in_lists, $restrict));
+
+
+				$privacy_list = array_merge(array_map('we::negate', array_keys($temp['groups'])), array(PRIVACY_DEFAULT, PRIVACY_MEMBERS), $in_lists);
+				sort($privacy_list, SORT_NUMERIC);
+				$temp['privacy'] = implode(',', array_flip(array_flip($privacy_list)));
+
+				cache_put_data('contacts_' . $id_member, $temp, 3000);
+			}
+			else
+				$temp = $cached;
+		}
+		$user['contacts'] = $temp;
+		$user['groups'] = array_flip(array_flip($user['groups']));
+		$user['privacy_list'] =& $temp['privacy'];
+		$user['buddies'] = array_keys($temp['all']);
+		unset($temp['all']);
+
+		$is = array(
+			'guest' => $id_member == 0,
+			'member' => $id_member > 0,
+			'm' . $id_member => true,
+			'admin' => in_array(1, $user['groups']),
+			'mod' => false,
+			'mobile' => $_SESSION['is_mobile'],
+			'true' => true,
+			'false' => false,
+		);
+
+
+		if ($is['admin'])
+			$user['sanctions'] = array();
+		else
+			if (!empty($user['sanctions']))
+				foreach ($user['sanctions'] as $infraction => $expiry)
+					if ($expiry != 1 && $expiry < time())
+						unset($user['sanctions'][$infraction]);
+
+
+		if (!empty($_GET['category']) && (int) $_GET['category'])
+			$is['c' . (int) $_GET['category']] = true;
+
+
+
+		$user['host'] = empty($_SERVER['REAL_HTTP_HOST']) ? (empty($_SERVER['HTTP_HOST']) ? (empty($_SERVER['HTTP_X_FORWARDED_SERVER']) ? substr(strrchr(ROOT, ':'), 3) : $_SERVER['HTTP_X_FORWARDED_SERVER']) : $_SERVER['HTTP_HOST']) : $_SERVER['REAL_HTTP_HOST'];
+		$user['server'] = PROTOCOL . $user['host'];
+
+
+
+		$user['url'] = (empty($_SERVER['REAL_HTTP_HOST']) ? $user['server'] : PROTOCOL . $_SERVER['HTTP_HOST']) . $_SERVER['REQUEST_URI'];
+
+
+		if (!empty($user['ignoreboards']) && empty($user['ignoreboards'][$tmp = count($user['ignoreboards']) - 1]))
+			unset($user['ignoreboards'][$tmp]);
+
+
+		if ($is['admin'])
+		{
+			$user['query_list_board'] = '1=1';
+			$user['query_see_board'] = '1=1';
+		}
+
+		else
+		{
+			$cache_groups = $user['groups'];
+			asort($cache_groups);
+			$cache_groups = implode(',', $cache_groups);
+
+			$temp = cache_get_data('board_access_' . $cache_groups, 300);
+			if ($temp === null || time() - 240 > $settings['settings_updated'])
+			{
+				$request = wesql::query('
+					SELECT id_board, view_perm, enter_perm
+					FROM {db_prefix}board_groups
+					WHERE id_group IN ({array_int:groups})',
+					array(
+						'groups' => $user['groups'],
+					)
+				);
+				$access = array(
+					'view_allow' => array(),
+					'view_deny' => array(),
+					'enter_allow' => array(),
+					'enter_deny' => array(),
+				);
+				while ($row = wesql::fetch_assoc($request))
+				{
+					if ($row['view_perm'] != 'disallow')
+						$access['view_' . $row['view_perm']][] = $row['id_board'];
+					if ($row['enter_perm'] != 'disallow')
+						$access['enter_' . $row['enter_perm']][] = $row['id_board'];
+				}
+				$user['qlb_boards'] = array_diff($access['view_allow'], $access['view_deny']);
+				$user['qsb_boards'] = array_diff($access['enter_allow'], $access['enter_deny']);
+				$user['query_list_board'] = empty($user['qlb_boards']) ? '0=1' : 'b.id_board IN (' . implode(',', $user['qlb_boards']) . ')';
+				$user['query_see_board'] = empty($user['qsb_boards']) ? '0=1' : 'b.id_board IN (' . implode(',', $user['qsb_boards']) . ')';
+
+				$cache = array(
+					'query_list_board' => $user['query_list_board'],
+					'query_see_board' => $user['query_see_board'],
+					'qlb_boards' => $user['qlb_boards'],
+					'qsb_boards' => $user['qsb_boards'],
+				);
+				cache_put_data('board_access_' . $cache_groups, $cache, 300);
+			}
+			else
+				$user += $temp;
+		}
+
+
+
+
+
+		if (empty($user['ignoreboards']))
+		{
+			$user['query_wanna_see_board'] = $user['query_see_board'];
+			$user['query_wanna_list_board'] = $user['query_list_board'];
+		}
+
+		else
+		{
+			if ($is['admin'])
+			{
+
+				$user['query_wanna_list_board'] = 'b.id_board NOT IN (' . implode(',', $user['ignoreboards']) . ')';
+				$user['query_wanna_see_board'] = $user['query_wanna_list_board'];
+			}
+			else
+			{
+				$user['query_wanna_see_board'] = 'b.id_board IN (' . implode(',', array_diff($user['qsb_boards'], $user['ignoreboards'])) . ')';
+				$user['query_wanna_list_board'] = 'b.id_board IN (' . implode(',', array_diff($user['qlb_boards'], $user['ignoreboards'])) . ')';
+			}
+		}
+
+		$user['query_see_thought'] = ($is['guest'] ? '
+			(' : '
+			(
+				h.id_member = ' . $id_member . ' OR ') . '
+				h.privacy IN (' . $user['privacy_list'] . ')
+			)';
+
+		wesql::register_replacement('query_see_board', $user['query_see_board']);
+		wesql::register_replacement('query_list_board', $user['query_list_board']);
+		wesql::register_replacement('query_wanna_see_board', $user['query_wanna_see_board']);
+		wesql::register_replacement('query_wanna_list_board', $user['query_wanna_list_board']);
+		wesql::register_replacement('query_see_thought', $user['query_see_thought']);
+		wesql::register_replacement('empty', "''");
+
+		self::$is =& $is;
+		self::$user =& $user;
+		self::$id = $id_member;
+		self::$is_admin =& $is['admin'];
+		self::$is_guest =& $is['guest'];
+		self::$is_member =& $is['member'];
+
+		define('MID', $id_member);
+	}
+
+	private static function negate($arr)
+	{
+		return -$arr;
+	}
+
+
+
+
+	public static function get_preferred_language($user_language, $use_cache = true)
+	{
+		global $settings;
+
+		$languages = getLanguages($use_cache);
+		$default = isset($settings['language']) ? $settings['language'] : $user_language;
+
+		if ($use_cache)
+		{
+
+			if (empty($settings['userLanguage']))
+				return $default;
+
+
+			if (!empty($_GET['language']) && isset($languages[$temp = strtr($_GET['language'], './\\:', '____')]))
+				return $_SESSION['language'] = $temp;
+
+			elseif (!empty($_SESSION['language']))
+				return $_SESSION['language'] = isset($languages[$_SESSION['language']]) ? $_SESSION['language'] : $default;
+
+
+			if (isset($languages[$user_language]))
+				return $user_language;
+		}
+
+
+		if (!isset($_SERVER['HTTP_ACCEPT_LANGUAGE']))
+			return $default;
+
+
+		preg_match_all('/([a-z]{1,8}(-[a-z]{1,8})?)\s*(;\s*q\s*=\s*(1|0\.[0-9]+))?/i', strtolower($_SERVER['HTTP_ACCEPT_LANGUAGE']), $lang_parse);
+		if (empty($lang_parse[1]))
+			return $default;
+
+
+		$preferred = array_combine($lang_parse[1], $lang_parse[4]);
+
+
+		foreach ($preferred as $key => $val)
+			if ($val === '')
+				$preferred[$key] = 1;
+
+
+		arsort($preferred, SORT_NUMERIC);
+
+
+		foreach ($languages as $key => $val)
+			$langs[$val['code']] = $key;
+
+		foreach ($preferred as $key => $value)
+			if ($lang = isset($langs[$key]) ? $langs[$key] : (isset($langs[substr($key, 0, 2)]) ? $langs[substr($key, 0, 2)] : ''))
+				return $lang;
+
+		return $default;
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	protected static function init_browser()
+	{
+		global $context;
+
+
+		$ua = self::$ua;
+		$browser['opera'] = strpos($ua, 'Opera') !== false;
+
+
+		$browser['webkit'] = $is_webkit = strpos($ua, 'AppleWebKit') !== false;
+		$browser['chrome'] = $is_webkit && strhas($ua, array('Chrome', 'CriOS'));
+		$browser['safari'] = $is_webkit && !$browser['chrome'] && strpos($ua, 'Safari') !== false;
+
+
+		$browser['gecko'] = !$is_webkit && strpos($ua, 'Gecko') !== false;
+		$browser['firefox'] = strpos($ua, 'Gecko/') !== false;
+
+		$browser['ie'] = $is_ie = strhas($ua, array('MSIE', 'Trident/'));
+
+
+
+		preg_match('~' . (
+				$browser['opera'] || $browser['safari'] ? 'version[/ ]' :
+				($browser['firefox'] ? 'firefox/' :
+				($browser['ie'] ? '(?:msie |rv[: ])' :
+				($browser['chrome'] ? 'c(?:hrome|rios)/' :
+				'applewebkit/')))
+			) . '([\d.]+)~i', $ua, $ver)
+		|| preg_match('~(?:version|opera)[/ ]([\d.]+)~i', $ua, $ver);
+
+		$ver = isset($ver[1]) ? (float) $ver[1] : 0;
+
+
+		if ($browser['safari'] && !$ver)
+		{
+			preg_match('~applewebkit/([\d.]+)~i', $ua, $ver);
+			$ver = isset($ver[1]) ? (float) $ver[1] : 0;
+			$ver = $ver >= 536 ? 6 : ($ver >= 534.48 ? 5.1 : ($ver >= 533.16 ? 5 : 4));
+		}
+
+
+		if ($browser['opera'])			$ver = max(11, $ver);
+		elseif ($browser['chrome'])		$ver = max(20, $ver);
+		elseif ($browser['firefox'])	$ver = $ver < 5 ? max(3, $ver) : max(15, $ver);
+		elseif ($browser['safari'])		$ver = max(4, $ver);
+		elseif ($browser['ie'])			$ver = max(6, $ver);
+
+
+		$browser['version'] = floor($ver * 10) / 10;
+
+		$browser['ie8down'] = $is_ie && $ver <= 8;
+		for ($i = 6; $i <= 11; $i++)
+			$browser['ie' . $i] = $is_ie && $ver == $i;
+
+
+		foreach (array('opera', 'chrome', 'firefox', 'ie', 'safari', 'webkit', 'gecko', '') as $agent)
+		{
+			$browser['agent'] = $agent;
+			if (!$agent || $browser[$agent])
+				break;
+		}
+
+
+
+		$os['mobile'] = !empty(self::$is['mobile']);
+
+
+
+
+		$os['windows'] = strpos($ua, 'Windows ') !== false;
+		$os['android'] = strpos($ua, 'Android') !== false;
+		$os['ios'] = $is_webkit && strpos($ua, '(iP') !== false;
+		if ($os['windows'])
+		{
+			if (preg_match('~Windows(?: NT)? (\d+\.\d+)~', $ua, $ver))
+				$os_ver = max(5.1, (float) $ver[1]);
+
+			else
+				foreach (array('8' => 6.2, '7' => 6.1, 'Vista' => 6, 'XP' => 5.1) as $key => $os_ver)
+					if (strpos($ua, 'Windows ' . $key) !== false)
+						break;
+		}
+		elseif ($os['android'] && preg_match('~Android (\d+\.\d)~', $ua, $ver))
+			$os_ver = max(2, (float) $ver[1]);
+		elseif ($os['ios'] && preg_match('~ OS (\d+(?:_\d))~', $ua, $ver))
+			$os_ver = max(3, (float) str_replace('_', '.', $ver[1]));
+
+		$os['os'] = '';
+		foreach (array('windows', 'android', 'ios') as $this_os)
+			if ($os[$this_os])
+				$os['os'] = $this_os;
+
+
+		if (empty($os['os']) && $browser['firefox'] && strpos($ua, '(Mobile;') !== false)
+		{
+			$os['os'] = 'ffos';
+			$os['mobile'] = self::$is['mobile'] = true;
+			$os_ver = '';
+		}
+
+
+
+		$os['version'] = !empty($os_ver) ? floor($os_ver * 10) / 10 : '';
+
+
+		$browser['possibly_robot'] = !empty(self::$user['possibly_robot']);
+
+
+		if (!self::$is_guest || in_array($context['action'], array('login', 'login2', 'register')))
+			$browser['possibly_robot'] = false;
+
+		$browser[$browser['agent'] . $browser['version']] = true;
+		$os[$os['os'] . $os['version']] = true;
+
+
+		self::$browser = $browser;
+		self::$os = $os;
+
+
+		call_hook('detect_browser');
+	}
+
+
+	protected static function is_mobile()
+	{
+		if (empty(self::$ua))
+			return false;
+
+		$ua = strtolower(self::$ua);
+
+		if (isset($_SERVER['HTTP_PROFILE']) || isset($_SERVER['HTTP_X_WAP_PROFILE']) || isset($_SERVER['HTTP_X_OPERAMINI_PHONE_UA']))
+			return true;
+
+		if (isset($_SERVER['HTTP_ACCEPT']) && strhas($_SERVER['HTTP_ACCEPT'], array('text/vnd.wap.wml', 'application/vnd.wap.xhtml+xml')))
+			return true;
+
+		$is_mobile = false;
+
+
+		foreach (explode('|', implode('|', array(
+			'Generic' => 'mobile',
+			'Android' => 'android',
+			'iOS' => 'iphone|ipod',
+			'BlackBerry' => 'blackberry',
+			'Symbian' => 'symbian',
+			'Windows' => 'windows ce|windows phone',
+			'PalmOS' => 'palm|avantgo|plucker|xiino',
+			'Others' => 'samsung|htc|playstation|nintendo|opera mobi'
+		))) as $device)
+			if (strpos($ua, $device) !== false)
+			{
+				$is_mobile = true;
+				break;
+			}
+
+
+		if ($is_mobile)
+		{
+			$is_mobile &= strpos($ua, 'flyer') === false;
+			$is_mobile &= strpos($ua, 'samsung') === false || strpos($ua, 'mobile') !== false || strpos($ua, 'android') === false;
+			$is_mobile &= strpos($ua, 'chrome') === false || preg_match('~chrome/[.0-9]* mobile~', $ua);
+		}
+
+		return $is_mobile;
+	}
+
+
+
+
+	public static function permissions()
+	{
+		global $settings, $topic, $board_info;
+
+		if (allowedTo('bypass_edit_disable'))
+		{
+			$settings['real_edit_disable_time'] = $settings['edit_disable_time'];
+			$settings['edit_disable_time'] = 0;
+		}
+
+		$user =& self::$user;
+
+
+
+		if (self::$is_admin)
+			$user['query_see_topic'] = '1=1';
+
+		elseif (self::$is_guest)
+			$user['query_see_topic'] = empty($settings['postmod_active']) ? 't.privacy = ' . PRIVACY_DEFAULT : '(t.approved = 1 AND t.privacy = ' . PRIVACY_DEFAULT . ')';
+
+
+
+		else
+		{
+			$user['can_skip_approval'] = empty($settings['postmod_active']) || allowedTo(array('moderate_forum', 'moderate_board', 'approve_posts'));
+			$user['query_see_topic'] = '
+			(
+				t.id_member_started = ' . MID . '
+				OR (' . ($user['can_skip_approval'] ? '' : (empty($user['mod_cache']['ap']) ? 't.approved = 1' :
+					'(t.approved = 1 OR t.id_board IN (' . implode(', ', $user['mod_cache']['ap']) . '))') . ' AND ')
+					. 't.privacy IN (' . $user['privacy_list'] . '))
+			)';
+		}
+
+		wesql::register_replacement('query_see_topic', $user['query_see_topic']);
+
+
+		if (empty($topic) || empty($_GET['action']))
+			return;
+
+
+		if (isset($board_info['cur_topic_privacy']) && $board_info['cur_topic_privacy'] == PRIVACY_DEFAULT && $board_info['cur_topic_approved'] == 1)
+			return;
+
+		$request = wesql::query('SELECT 1 FROM {db_prefix}topics AS t WHERE id_topic = {int:topic} AND {query_see_topic}', array('topic' => $topic));
+		$wrong = !wesql::num_rows($request);
+		wesql::free_result($request);
+		if ($wrong)
+			rejectTopic();
+	}
+
+
+
+
+	public static function is($string)
+	{
+		if ($string === (array) $string)
+			return self::analyze($string);
+		if (isset(self::$cache[$string]))
+			return self::$cache[$string];
+
+		if (isset(self::$is[$string]))
+			return self::$cache[$string] = (empty(self::$is[$string]) ? false : $string);
+		if (isset(self::$browser[$string]))
+			return self::$cache[$string] = (empty(self::$browser[$string]) ? false : $string);
+		if (isset(self::$os[$string]))
+			return self::$cache[$string] = (empty(self::$os[$string]) ? false : $string);
+
+		return self::$cache[$string] = self::analyze($string);
+	}
+
+
+
+
+
+
+	public static function analyze($strings)
+	{
+		if ($brackets_parsed = !is_array($strings))
+		{
+			self::parse_brackets($strings);
+			$strings = array_flip(array_map('trim', preg_split('~[,|]+~', $strings)));
+		}
+
+		foreach (self::$is as $key => $val)
+			if (isset($strings[$key]) && !empty($val))
+				return $key;
+
+		$browser = self::$browser;
+		$a = $browser['agent'];
+		$bv = $browser['version'];
+		$o = self::$os['os'];
+		$ov = self::$os['version'];
+
+
+		if (isset($strings[$a])) return $a;
+		if (isset($strings[$a . $bv])) return $a . $bv;
+		if (isset($strings[$a . '[' . $bv . ']'])) return $a . '[' . $bv . ']';
+		if (isset($strings[$a . '[-' . $bv . ']'])) return $a . '[-' . $bv . ']';
+		if (isset($strings[$a . '[' . $bv . '-]'])) return $a . '[' . $bv . '-]';
+
+
+		if (isset($strings[$o])) return $o;
+		if (isset($strings[$o . $ov])) return $o . $ov;
+		if (isset($strings[$o . '[' . $ov . ']'])) return $o . '[' . $ov . ']';
+		if (isset($strings[$o . '[-' . $ov . ']'])) return $o . '[-' . $ov . ']';
+		if (isset($strings[$o . '[' . $ov . '-]'])) return $o . '[' . $ov . '-]';
+
+		$alength = strlen($a) + 1;
+		$olength = strlen($o) + 1;
+
+
+		foreach ($strings as $string => $dummy)
+		{
+			if (empty($string))
+				continue;
+
+			if (!$brackets_parsed)
+				self::parse_brackets($string);
+
+
+			$and = strpos($string, '&');
+			if ($and !== false)
+			{
+
+				if (!in_array(false, array_map('we::is', array_map('trim', preg_split('~&+~', $string)))))
+					return $string;
+				continue;
+			}
+
+
+			if (strhas($string, array('=', '<', '>')))
+				$string = preg_replace_callback('~(!?[^!=<>\h]*)\h*(=+|!=+|<>|[<>]=?)\h*(!?[^!=<>\h]*)~', 'we::evaluate', $string);
+
+
+			while (strpos($string, '!') !== false)
+				$string = preg_replace_callback('~!([^\s]*)~', 'we::parse_negative', $string);
+
+
+			while (strpos($string, '"') !== false)
+				$string = preg_replace_callback('~"([^"]*)"?+~', 'we::loose_bool', $string);
+
+
+			if (strpos($string, ' ') === false && preg_match('~^[-.]*\d~', $string))
+				$string = preg_replace_callback('~(.+)~', 'we::loose_bool', $string);
+
+			if (!empty(self::$is[$string]))
+				return $string;
+
+			$bracket = strpos($string, '[');
+			$request = $bracket === false ? $string : substr($string, 0, $bracket);
+
+			if (empty($browser[$request]) && empty(self::$os[$request]))
+				continue;
+
+			if ($bracket === false)
+				return $string;
+
+			$split = explode('-', trim(substr($string, isset(self::$os[$request]) ? $olength : $alength, -1), ' ]'));
+			$v = isset(self::$os[$request]) ? $ov : $bv;
+			if (isset($split[1]))
+			{
+				if (empty($split[0]) && $v <= $split[1]) return $string;
+				if (empty($split[1]) && $v >= $split[0]) return $string;
+				if ($v >= $split[0] && $v <= $split[1]) return $string;
+			}
+			elseif ($v == $split[0]) return $string;
+		}
+
+		return false;
+	}
+
+	private static function parse_positive($match)
+	{
+		return self::is($match[1]) ? 'true' : 'false';
+	}
+
+	private static function parse_negative($match)
+	{
+		return self::is($match[1]) ? 'false' : 'true';
+	}
+
+	private static function parse_brackets(&$string)
+	{
+		$protect = 0;
+		$original_string = $string;
+		while (strpos($string, '(') !== false)
+		{
+			$string = preg_replace_callback('~\(([^()]*)\)~', 'we::parse_positive', $string);
+			if ($protect++ > 100)
+			{
+
+				log_error('Can\'t parse string, due to mismatched brackets.<br><br>' . $original_string, false);
+				return 'false';
+			}
+		}
+	}
+
+	private static function loose($var)
+	{
+		return $var ? ($var == '1' ? 'true' : (string) $var) : 'false';
+	}
+
+	private static function loose_bool($var)
+	{
+		return $var[1] && $var[1] != 'false' ? 'true' : 'false';
+	}
+
+
+
+	private static function evaluate($ops)
+	{
+
+		$ops[1] = trim($ops[1]);
+		$ops[3] = trim($ops[3]);
+
+		$ops[1] = isset(self::$is[$ops[1]]) ? self::$is[$ops[1]] : $ops[1];
+		$ops[3] = isset(self::$is[$ops[3]]) ? self::$is[$ops[3]] : $ops[3];
+
+
+		$ops[1] = trim($ops[1], "'\"");
+		$ops[3] = trim($ops[3], "'\"");
+
+		$op1 = intval($ops[1]);
+		$op3 = intval($ops[3]);
+		if (($op1 != 0 || is_numeric($ops[1])) && ($op3 != 0 || is_numeric($ops[3])))
+		{
+			$ops[1] = $op1;
+			$ops[3] = $op3;
+		}
+
+		if (($ops[2] == '==' || $ops[2] == '===') && self::loose($ops[1]) == self::loose($ops[3]))
+			return 'true';
+		if (($ops[2] == '!=' || $ops[2] == '!==' || $ops[2] == '<>') && self::loose($ops[1]) != self::loose($ops[3]))
+			return 'true';
+		if ($ops[2] == '>' && (int) $ops[1] > (int) $ops[3])
+			return 'true';
+		if ($ops[2] == '>=' && (int) $ops[1] >= (int) $ops[3])
+			return 'true';
+		if ($ops[2] == '<' && (int) $ops[1] < (int) $ops[3])
+			return 'true';
+		if ($ops[2] == '<=' && (int) $ops[1] <= (int) $ops[3])
+			return 'true';
+
+		return 'false';
+	}
+}

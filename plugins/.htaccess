@@ -1,0 +1,5 @@
+
+<FilesMatch "\.(zip|gz|bz2|tar|xml)$">
+	Order Deny,Allow
+	Deny from all
+</FilesMatch>

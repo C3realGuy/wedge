@@ -1,0 +1,797 @@
+<?php
+
+
+
+
+
+
+
+
+
+if (!defined('WEDGE'))
+	die('Hacking attempt...');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function loadGeneralSettingParameters($subActions = array(), $defaultAction = '')
+{
+	global $context;
+
+
+	isAllowedTo('admin_forum');
+
+	loadLanguage('Help');
+	loadLanguage('ManageSettings');
+
+
+	loadSource('ManageServer');
+
+	wetem::load('show_settings');
+
+
+	$_REQUEST['sa'] = isset($_REQUEST['sa'], $subActions[$_REQUEST['sa']]) ? $_REQUEST['sa'] : (!empty($defaultAction) ? $defaultAction : array_pop(array_keys($subActions)));
+	$context['sub_action'] = $_REQUEST['sa'];
+}
+
+
+function ModifyFeatureSettings()
+{
+	global $context, $txt;
+
+	$context['page_title'] = $txt['settings_title'];
+
+	$subActions = array(
+		'basic' => 'ModifyBasicSettings',
+		'home' => 'ModifyHomepage',
+		'pretty' => 'ModifyPrettyURLs',
+	);
+
+	loadGeneralSettingParameters($subActions, 'basic');
+
+
+	$context[$context['admin_menu_name']]['tab_data'] = array(
+		'title' => $txt['settings_title'],
+		'help' => 'featuresettings',
+		'description' => $txt['settings_desc'],
+		'tabs' => array(
+			'basic' => array(
+			),
+			'home' => array(
+				'description' => $txt['homepage_desc'],
+			),
+			'pretty' => array(
+				'description' => $txt['pretty_urls_desc'],
+			),
+		),
+	);
+
+
+	$subActions[$_REQUEST['sa']]();
+}
+
+function ModifyBasicSettings($return_config = false)
+{
+	global $txt, $context;
+
+	$config_vars = array(
+			array('text', 'mbname', 30, 'file' => true),
+			array('text', 'boardurl', 40, 'file' => true),
+			array('text', 'home_url', 40, 'subtext' => $txt['home_url_subtext']),
+			array('check', 'home_link', 'subtext' => $txt['home_link_subtext']),
+		'',
+			array('text', 'site_slogan', 40, 'subtext' => $txt['site_slogan_desc']),
+			array('text', 'header_logo_url', 40, 'subtext' => $txt['header_logo_url_desc']),
+		'',
+
+			array('check', 'trackStats'),
+			array('check', 'hitStats'),
+		'',
+			array('select', 'todayMod', array(
+				$txt['today_disabled'],
+				$txt['today_only'],
+				$txt['yesterday_today'],
+			)),
+		'',
+
+			array('check', 'disallow_sendBody'),
+
+		array('title', 'member_options_title', 'icon' => 'memberoptions.png'),
+
+			array('check', 'allow_guestAccess'),
+		'',
+			array('check', 'enable_buddylist'),
+			array('check', 'allow_editDisplayName'),
+			array('check', 'titlesEnable'),
+			array('check', 'approveAccountDeletion'),
+		'',
+			array('check', 'allow_disableAnnounce'),
+
+		array('title', 'look_layout_title', 'icon' => 'current_theme.png'),
+
+			array('check', 'show_stats_index'),
+			array('check', 'show_latest_member'),
+			array('check', 'show_board_desc'),
+			array('check', 'show_children'),
+			array('check', 'show_avatars'),
+			array('check', 'show_gender'),
+			array('check', 'show_blurb'),
+			array('check', 'show_signatures'),
+
+		array('title', 'admin_likes', 'icon' => 'likes.png'),
+
+			array('check', 'likes_enabled'),
+			array('check', 'likes_own_posts'),
+	);
+
+	if ($return_config)
+		return $config_vars;
+
+
+	if (isset($_GET['save']))
+	{
+		checkSession();
+
+		saveSettings($config_vars);
+
+		redirectexit('action=admin;area=featuresettings;sa=basic');
+	}
+
+	$context['post_url'] = '<URL>?action=admin;area=featuresettings;save;sa=basic';
+	$context['settings_title'] = $txt['mods_cat_features'];
+
+	prepareDBSettingContext($config_vars);
+}
+
+
+function ModifySpamSettings($return_config = false)
+{
+	global $txt, $context, $settings;
+
+	isAllowedTo('admin_forum');
+
+	loadLanguage('Help');
+	loadLanguage('ManageSettings');
+
+	loadSource('ManageServer');
+
+
+	$context['verification_image_href'] = '<URL>?action=verification;rand=' . md5(mt_rand());
+
+	$context['page_title'] = $context['settings_title'] = $txt['antispam_settings'];
+
+	$config_vars = array(
+			array('desc', 'antispam_settings_desc'),
+			array('check', 'reg_verification'),
+			array('check', 'search_enable_captcha'),
+
+			'guest_verify' => array('check', 'guests_require_captcha', 'subtext' => $txt['setting_guests_require_captcha_desc']),
+			array('int', 'posts_require_captcha', 'max' => 999999, 'subtext' => $txt['posts_require_captcha_desc'], 'onchange' => '$(\'#guests_require_captcha\').prop(this.value > 0 ? { disabled: true, checked: true } : { disabled: false });'),
+			array('check', 'guests_report_require_captcha'),
+
+			array('title', 'configure_captcha'),
+			array('desc', 'configure_captcha_desc'),
+			array('check', 'use_captcha_images'),
+			array('check', 'use_animated_captcha', 'subtext' => $txt['use_animated_captcha_desc']),
+
+			array('title', 'setup_verification_questions'),
+			array('desc', 'setup_verification_questions_desc'),
+			array('int', 'qa_verification_number', 'max' => 5, 'subtext' => $txt['setting_qa_verification_number_desc']),
+		'',
+			array('callback', 'question_answer_list'),
+	);
+
+	call_hook('settings_spam', array(&$config_vars, &$return_config));
+
+	if ($return_config)
+		return $config_vars;
+
+
+	getLanguages();
+
+	$css = array();
+	foreach ($context['languages'] as $lang_id => $lang)
+		$css[] = '#antispam .flag_' . $lang_id;
+	add_css('
+	' . implode(', ', $css) . ' { margin-right: 4px; margin-bottom: 1px } #antispam td { vertical-align: top; text-align: center } #antispam td.lang { text-align: right }');
+
+	$context['qa_verification_qas'] = array();
+
+	if (!empty($settings['qa_verification_qas']))
+	{
+		$qa = unserialize($settings['qa_verification_qas']);
+		foreach ($qa as $lang => $questions)
+			foreach ($questions as $q_a_set)
+			{
+				$question = array_shift($q_a_set);
+				$context['qa_verification_qas'][] = array(
+					'lang' => $lang,
+					'question' => $question,
+					'answers' => $q_a_set,
+				);
+			}
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+	if (isset($_GET['save']))
+	{
+		checkSession();
+
+
+		if (empty($_POST['posts_require_captcha']) && !empty($_POST['guests_require_captcha']))
+			$_POST['posts_require_captcha'] = -1;
+
+		$count_questions = 0;
+
+		if (empty($_POST['question']))
+		{
+			$config_vars[] = array('text', 'qa_verification_qas');
+			$_POST['qa_verification_number'] = 0;
+			$_POST['qa_verification_qas'] = '';
+		}
+		else
+		{
+			$qa_verification_qas = array();
+			$lang_list = array();
+
+			foreach ($_POST['lang_select'] as $id => $lang)
+			{
+				if (empty($lang) || !isset($context['languages'][$lang]) || empty($_POST['question']) || !is_array($_POST['question']) || empty($_POST['question'][$id]))
+					continue;
+
+				$question = trim(westr::htmlspecialchars($_POST['question'][$id], ENT_QUOTES));
+				if (empty($_POST['answer']) || !is_array($_POST['answer']) || empty($_POST['answer'][$id]))
+					continue;
+				$answers = array();
+				foreach ($_POST['answer'][$id] as $answer)
+				{
+					$answer = trim(westr::htmlspecialchars($answer, ENT_QUOTES));
+					if (!empty($answer))
+						$answers[] = $answer;
+				}
+				if (!empty($question) && !empty($answers))
+				{
+					$qa_verification_qas[$lang][] = array_merge((array) $question, $answers);
+					if (isset($lang_list[$lang]))
+						$lang_list[$lang]++;
+					else
+						$lang_list[$lang] = 1;
+				}
+			}
+			if (!empty($lang_list))
+				$count_questions = min($lang_list);
+
+			if (!empty($qa_verification_qas))
+			{
+				$qa_string = serialize($qa_verification_qas);
+				if (strlen($qa_string) <= 65535)
+				{
+					$_POST['qa_verification_qas'] = $qa_string;
+					$config_vars[] = array('text', 'qa_verification_qas');
+				}
+			}
+		}
+
+		if (empty($count_questions) || $_POST['qa_verification_number'] > $count_questions)
+			$_POST['qa_verification_number'] = $count_questions;
+
+
+		saveSettings($config_vars);
+
+		redirectexit('action=admin;area=antispam');
+	}
+
+	$character_range = array_merge(range('A', 'H'), array('K', 'M', 'N', 'P', 'R'), range('T', 'Y'));
+	$_SESSION['visual_verification_code'] = '';
+	for ($i = 0; $i < 6; $i++)
+		$_SESSION['visual_verification_code'] .= $character_range[array_rand($character_range)];
+
+
+	$settings['guests_require_captcha'] = !empty($settings['posts_require_captcha']);
+	$settings['posts_require_captcha'] = !isset($settings['posts_require_captcha']) || $settings['posts_require_captcha'] == -1 ? 0 : $settings['posts_require_captcha'];
+
+
+	if ($settings['posts_require_captcha'])
+		add_js('
+	$(\'#guests_require_captcha\').prop(\'disabled\', true);');
+
+	$context['post_url'] = '<URL>?action=admin;area=antispam;save';
+
+	wetem::load('show_settings');
+
+	prepareDBSettingContext($config_vars);
+}
+
+function ModifyLogSettings($return_config = false)
+{
+	global $txt, $context, $settings;
+
+
+	loadLanguage('ManageSettings');
+
+	$context['page_title'] = $context['settings_title'] = $txt['log_settings'];
+
+	$config_vars = array(
+			array('check', 'enableErrorLogging'),
+			array('check', 'enableErrorPasswordLogging'),
+			array('check', 'enableError404Logging'),
+			array('check', 'enableErrorQueryLogging'),
+		'',
+			array('check', 'log_enabled_moderate', 'subtext' => $txt['log_enabled_moderate_subtext']),
+			array('check', 'log_enabled_admin', 'subtext' => $txt['log_enabled_admin_subtext']),
+			array('check', 'log_enabled_profile', 'subtext' => $txt['log_enabled_profile_subtext']),
+
+			array('title', 'logPruning'),
+
+			'pruningOptions' => array('check', 'pruningOptions'),
+		'',
+
+			array('int', 'pruneErrorLog', 'postinput' => $txt['days_word'], 'subtext' => $txt['pruneZeroDisable']),
+			array('int', 'pruneModLog', 'postinput' => $txt['days_word'], 'subtext' => $txt['pruneZeroDisable']),
+			array('int', 'pruneReportLog', 'postinput' => $txt['days_word'], 'subtext' => $txt['pruneZeroDisable']),
+			array('int', 'pruneScheduledTaskLog', 'postinput' => $txt['days_word'], 'subtext' => $txt['pruneZeroDisable']),
+			array('int', 'pruneSpiderHitLog', 'postinput' => $txt['days_word'], 'subtext' => $txt['pruneZeroDisable']),
+
+
+	);
+
+	if ($return_config)
+		return $config_vars;
+
+
+	loadSource('ManageServer');
+
+
+	if (isset($_GET['save']))
+	{
+		checkSession();
+
+		$savevar = array(
+			array('check', 'enableErrorLogging'),
+			array('check', 'enableErrorQueryLogging'),
+			array('check', 'log_enabled_moderate'),
+			array('check', 'log_enabled_admin'),
+			array('check', 'log_enabled_profile'),
+			array('text', 'pruningOptions')
+		);
+
+		if (!empty($_POST['pruningOptions']))
+		{
+			$vals = array();
+			foreach ($config_vars as $index => $dummy)
+			{
+				if (!is_array($dummy) || strpos($dummy[1], 'prune') !== 0)
+					continue;
+
+				$vals[] = empty($_POST[$dummy[1]]) || $_POST[$dummy[1]] < 0 ? 0 : (int) $_POST[$dummy[1]];
+			}
+			$_POST['pruningOptions'] = implode(',', $vals);
+		}
+		else
+			$_POST['pruningOptions'] = '';
+
+		saveSettings($savevar);
+		redirectexit('action=admin;area=logs;sa=settings');
+	}
+
+	$context['post_url'] = '<URL>?action=admin;area=logs;save;sa=settings';
+	wetem::load('show_settings');
+
+
+	if (!empty($settings['pruningOptions']))
+		@list ($settings['pruneErrorLog'], $settings['pruneModLog'], $settings['pruneReportLog'], $settings['pruneScheduledTaskLog'], $settings['pruneSpiderHitLog']) = explode(',', $settings['pruningOptions']);
+	else
+		$settings['pruneErrorLog'] = $settings['pruneModLog'] = $settings['pruneReportLog'] = $settings['pruneScheduledTaskLog'] = $settings['pruneSpiderHitLog'] = 0;
+
+	prepareDBSettingContext($config_vars);
+}
+
+function ModifyPmSettings($return_config = false)
+{
+	global $context, $txt, $settings;
+	$config_vars = array(
+		array('check', 'pm_enabled'),
+	);
+
+	loadLanguage('ManageSettings');
+
+	$context['page_title'] = $context['settings_title'] = $txt['admin_personal_messages'];
+
+	if (!empty($settings['pm_enabled']))
+		$config_vars = array_merge($config_vars, array(
+			'',
+			array('permissions', 'pm_read', 'exclude' => array(-1)),
+			array('permissions', 'pm_send', 'exclude' => array(-1)),
+			'',
+			'pm1' => array('int', 'max_pm_recipients', 'subtext' => $txt['max_pm_recipients_subtext']),
+			'pm2' => array('int', 'pm_posts_verification', 'subtext' => $txt['pm_posts_verification_subtext']),
+			'pm3' => array('int', 'pm_posts_per_hour', 'subtext' => $txt['pm_posts_per_hour_subtext']),
+			'',
+			array('check', 'masterSavePmDrafts'),
+			array('permissions', 'save_pm_draft', 'exclude' => array(-1)),
+			array('check', 'masterAutoSavePmDrafts'),
+			array('permissions', 'auto_save_pm_draft', 'exclude' => array(-1)),
+			'',
+			array('message', 'pm_draft_other_settings'),
+		));
+
+	if ($return_config)
+		return $config_vars;
+
+	loadSource('ManageServer');
+
+
+	if (isset($_GET['save']))
+	{
+		checkSession();
+
+		$save_vars = $config_vars;
+
+		if (!empty($settings['pm_enabled']))
+		{
+			$_POST['pm_spam_settings'] = (int) $_POST['max_pm_recipients'] . ',' . (int) $_POST['pm_posts_verification'] . ',' . (int) $_POST['pm_posts_per_hour'];
+
+			unset($save_vars['pm1'], $save_vars['pm2'], $save_vars['pm3']);
+
+			$save_vars[] = array('text', 'pm_spam_settings');
+		}
+
+		saveSettings($save_vars);
+
+		writeLog();
+		redirectexit('action=admin;area=pm');
+	}
+
+	$context['post_url'] = '<URL>?action=admin;area=pm;save';
+
+
+	list ($settings['max_pm_recipients'], $settings['pm_posts_verification'], $settings['pm_posts_per_hour']) = explode(',', $settings['pm_spam_settings']);
+
+	wetem::load('show_settings');
+	prepareDBSettingContext($config_vars);
+}
+
+function ModifyHomepage($return_config = false)
+{
+	global $context, $settings, $txt, $boards;
+
+	loadLanguage('ManageSettings');
+	loadSource(array('ManageServer', 'Subs-Boards'));
+	getBoardTree();
+	$bids = array();
+	foreach ($boards as $id => $board)
+		if (!$board['redirect'])
+			$bids[$id] = $board['name'];
+
+	if (empty($settings['homepage_type']))
+		$settings['homepage_type'] = 'custom';
+	if (empty($settings['homepage_custom']))
+		$settings['homepage_custom'] = "topics\nthoughts\nboards\ninfo";
+
+	$config_vars = array(
+		'type' => array('select', 'homepage_type', array(
+			'boardlist' => $txt['homepage_boardlist'],
+			'board' => $txt['homepage_board'],
+			'action' => $txt['homepage_action'],
+			'custom' => $txt['homepage_custom'],
+		)),
+		'',
+		array('select', 'homepage_board', $bids),
+		array('text', 'homepage_action'),
+		array('large_text', 'homepage_custom'),
+		'',
+		array('message', 'homepage_message'),
+	);
+
+	foreach ($context['languages'] as $id => $lang)
+	{
+		$config_vars[] = array('text', 'homepage_blurb_title_' . $id, '', sprintf($txt['homepage_blurb_title'], '<span class="flag_' . $id . '"></span> ' . $lang['name']));
+		$config_vars[] = array('large_text', 'homepage_blurb_' . $id, '', sprintf($txt['homepage_blurb'], '<span class="flag_' . $id . '"></span> ' . $lang['name']));
+	}
+
+	add_js('
+	function updateHomepage()
+	{
+		$("#homepage_board").closest("dd").prev().addBack().toggle($("#homepage_type").val() == "board");
+		$("#homepage_action").closest("dd").prev().addBack().toggle($("#homepage_type").val() == "action");
+		$("#homepage_custom").closest("dd").prev().addBack().toggle($("#homepage_type").val() == "custom");
+		$("#homepage_custom").closest("dl").prev().toggle($("#homepage_type").val() != "boardlist");
+		$("[id^=homepage_blurb_]").closest("dd").prev().addBack().toggle($("#homepage_type").val() == "custom");
+	}
+	$("#homepage_type").change(updateHomepage);
+	updateHomepage();');
+
+	$context['page_title'] = $context['settings_title'] = $txt['homepage'];
+
+	if ($return_config)
+		return $config_vars;
+
+
+	if (isset($_GET['save']))
+	{
+		checkSession();
+
+		$types = array('boardlist', 'board', 'action', 'custom');
+		$type = in_array($_POST['homepage_type'], $types) ? $_POST['homepage_type'] : 'custom';
+		if ($type == 'board')
+			$_POST['homepage_board'] = (int) $_POST['homepage_board'];
+		elseif ($type == 'action' && !file_exists(APP_DIR . '/' . $_POST['homepage_action'] . '.php'))
+			$_POST['homepage_action'] = 'boards';
+
+		saveSettings($config_vars);
+
+		redirectexit('action=admin;area=featuresettings;sa=home');
+	}
+
+	$context['post_url'] = '<URL>?action=admin;area=featuresettings;sa=home;save';
+
+	wetem::load('show_settings');
+	prepareDBSettingContext($config_vars);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+function ModifyPrettyURLs($return_config = false)
+{
+	global $context, $settings, $txt, $remove_index;
+
+
+	if ($return_config)
+		return array(
+			array('check', 'pretty_filter_boards'),
+			array('check', 'pretty_filter_topics'),
+			array('check', 'pretty_filter_actions'),
+			array('check', 'pretty_filter_profiles'),
+		);
+
+	wetem::load('pretty_urls');
+	$context['page_title'] = $txt['admin_pretty_urls'];
+
+
+	if (isset($settings['pretty_filters']['actions']))
+	{
+		$action = $settings['pretty_filters']['actions'];
+		unset($settings['pretty_filters']['actions']);
+		$settings['pretty_filters']['actions'] = $action;
+	}
+	$context['pretty']['filters'] = $settings['pretty_filters'];
+
+
+	if (isset($_REQUEST['refill']))
+	{
+		loadSource('PrettyUrls-Filters');
+		pretty_synchronize_topic_urls();
+		$context['reset_output'] = $txt['pretty_converted'];
+	}
+
+	elseif (isset($_REQUEST['save']))
+	{
+		$is_enabled = false;
+		foreach ($settings['pretty_filters'] as $id => &$filter)
+			$is_enabled |= ($filter = isset($_POST['pretty_filter_' . $id]) ? 1 : 0);
+
+		$action = isset($_POST['pretty_prefix_action']) ? $_POST['pretty_prefix_action'] : 'do/';
+		if ($action != '' && $action != 'do/')
+			$action = 'do/';
+		$profile = isset($_POST['pretty_prefix_profile']) ? $_POST['pretty_prefix_profile'] : 'profile/';
+		if ($profile != '~' && $profile != 'profile/')
+			$profile = 'profile/';
+
+		if (isset($_POST['from']) && array_filter($_POST['from']) != $_POST['from'])
+			foreach ($_POST['from'] as $key => $val)
+				if (empty($val))
+					unset($_POST['from'][$key], $_POST['to'][$key]);
+
+		loadSource('Subs-CachePHP');
+		updateSettings(
+			array(
+				'pretty_enable_filters' => $is_enabled,
+				'pretty_enable_cache' => isset($_POST['pretty_cache']) ? ($_POST['pretty_cache'] == 'on' ? 'on' : '') : '',
+				'pretty_filters' => serialize($settings['pretty_filters']),
+				'pretty_prefix_action' => $action,
+				'pretty_prefix_profile' => $profile,
+				'page_replacements' => isset($_POST['from']) ? serialize(array_combine($_POST['from'], $_POST['to'])) : '',
+			)
+		);
+		$new_remove_index = isset($_POST['pretty_remove_index']) ? ($_POST['pretty_remove_index'] == 'on' ? 1 : 0) : 1;
+		if (!isset($remove_index) || $new_remove_index != $remove_index)
+			updateSettingsFile(array('remove_index' => $new_remove_index));
+		$settings['pretty_filters'] = unserialize($settings['pretty_filters']);
+
+		if (isset($_REQUEST['pretty_cache']))
+			wesql::query('
+				TRUNCATE {db_prefix}pretty_urls_cache',
+				array()
+			);
+
+
+		loadSource('Subs-PrettyUrls');
+		pretty_update_filters();
+
+
+		clean_cache('css');
+
+		redirectexit('action=admin;area=featuresettings;sa=pretty');
+	}
+
+	$context['pretty']['settings'] = array(
+		'cache' => !empty($settings['pretty_enable_cache']) ? $settings['pretty_enable_cache'] : 0,
+		'index' => !empty($remove_index) ? $remove_index : 0,
+		'pr' => !empty($settings['page_replacements']) ? unserialize($settings['page_replacements']) : array(),
+	);
+
+
+	$settings['page_replacements'] = '';
+}
+
+
+function ModifySettingsPageHandler($return_config = false, $plugin_id = null)
+{
+	global $context, $txt, $settings, $admin_areas;
+
+
+	if ($plugin_id === null && !empty($_GET['area']) && !empty($admin_areas['plugins']['areas'][$_GET['area']]['plugin_id']))
+		$plugin_id = $admin_areas['plugins']['areas'][$_GET['area']]['plugin_id'];
+
+	if (empty($plugin_id) || empty($context['plugins_dir'][$plugin_id]) || !file_exists($context['plugins_dir'][$plugin_id] . '/plugin-info.xml'))
+		redirectexit('action=admin');
+
+	$manifest = safe_sxml_load($context['plugins_dir'][$plugin_id] . '/plugin-info.xml');
+	if (empty($manifest->{'settings-page'}))
+		redirectexit('action=admin');
+
+
+	foreach ($manifest->{'settings-page'}->language as $lang)
+		if (!empty($lang['file']))
+			loadPluginLanguage($plugin_id, (string) $lang['file']);
+
+
+	$admin_cache = unserialize($settings['plugins_admin']);
+	$return_area = $admin_cache[$plugin_id]['area'];
+	$context['settings_title'] = $context['page_title'] = $admin_cache[$plugin_id]['name'];
+
+
+	$config_vars = array();
+	$elements = $manifest->{'settings-page'}->children();
+	foreach ($elements as $element)
+	{
+		$item = $element->getName();
+		$name = !empty($element['name']) ? (string) $element['name'] : '';
+		if (empty($name) && $item != 'hr')
+			continue;
+		$new_item = array();
+		switch ($item)
+		{
+			case 'desc':
+			case 'title':
+			case 'check':
+			case 'yesno':
+			case 'email':
+			case 'password':
+			case 'bbc':
+			case 'float':
+			case 'boards':
+				$new_item = array($item, $name);
+				break;
+			case 'text':
+			case 'large_text':
+				$array = array($item, $name);
+				if (!empty($element['size']))
+					$array['size'] = (string) $element['size'];
+				$new_item = $array;
+				break;
+			case 'select':
+			case 'multi_select':
+				$array = array($item, $name, array());
+				foreach ($element->option as $opt)
+				{
+					if (!empty($opt['name']) && isset($opt['value']))
+					{
+						$n = (string) $opt['name'];
+						$array[2][(string) $opt['value']] = isset($txt[$n]) ? $txt[$n] : $n;
+					}
+				}
+				if (!empty($array[2]))
+					$new_item = $array;
+				break;
+			case 'int':
+				$array = array($item, $name);
+				foreach (array('step', 'min', 'max', 'size') as $attr)
+					if (isset($element[$attr]))
+						$array[$attr] = (int) $element[$attr];
+				$new_item = $array;
+				break;
+			case 'percent':
+				$array = array($item, $name);
+				$new_item = $array;
+				break;
+			case 'permissions':
+				$array = array($item, $name);
+				if (!empty($element['noguests']) && $element['noguests'] == 'yes')
+					$array['exclude'] = array(-1);
+				$new_item = $array;
+				break;
+			case 'literal':
+				$new_item = isset($txt[$name]) ? $txt[$name] : $name;
+				break;
+			case 'hr':
+				$config_vars[] = '';
+				break;
+
+			case 'language':
+			default:
+				break;
+		}
+
+		if (!empty($new_item))
+		{
+			if (isset($txt[$name . '_subtext']))
+				$new_item['subtext'] = $txt[$name . '_subtext'];
+			$config_vars[] = $new_item;
+		}
+	}
+
+	if ($return_config)
+		return $config_vars;
+
+	loadSource('ManageServer');
+
+
+	if (isset($_GET['save']))
+	{
+		checkSession();
+
+		saveSettings($config_vars);
+		redirectexit('action=admin;area=' . $return_area);
+	}
+
+	$context['post_url'] = '<URL>?action=admin;area=' . $return_area . ';save';
+	wetem::load('show_settings');
+	prepareDBSettingContext($config_vars);
+}

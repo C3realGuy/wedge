@@ -1,0 +1,1 @@
+<?php if(defined('WEDGE')&&$valid=time()<1493031615)$val='a:0:{}';
